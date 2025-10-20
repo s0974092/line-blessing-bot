@@ -8,8 +8,8 @@ import { generateImage } from './ai';
 import { setUserState, getUserState, clearUserState } from './state';
 
 // --- 1. Load Data ---
-const themes = JSON.parse(fs.readFileSync(join(__dirname, 'themes.json'), 'utf8'));
-const styles = JSON.parse(fs.readFileSync(join(__dirname, 'styles.json'), 'utf8'));
+const themes = JSON.parse(fs.readFileSync(join(__dirname, './themes.json'), 'utf8'));
+const styles = JSON.parse(fs.readFileSync(join(__dirname, './styles.json'), 'utf8'));
 
 // --- 2. Setup LINE SDK and Express ---
 const config: line.MiddlewareConfig & line.ClientConfig = {
