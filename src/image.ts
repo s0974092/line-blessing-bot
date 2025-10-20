@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,7 +10,7 @@ cloudinary.config({
 });
 
 // Register the custom font
-registerFont('./assets/fonts/LXGWWenKaiMonoTC-Regular.ttf', { family: 'LXGW WenKai Mono TC' });
+GlobalFonts.registerFromPath('./assets/fonts/LXGWWenKaiMonoTC-Regular.ttf', 'LXGW WenKai Mono TC');
 
 /**
  * Overlays text on an image.
