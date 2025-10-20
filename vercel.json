@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "dist/index.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "installCommand": "npm install --platform=linux --arch=x64"
+}
