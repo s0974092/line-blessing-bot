@@ -29,7 +29,7 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
   try {
     const prompt = composePrompt(theme, style);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
