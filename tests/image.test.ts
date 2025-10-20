@@ -1,7 +1,7 @@
 import { uploadImage, overlayTextOnImage } from '../src/image';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable, Writable } from 'stream';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 // Mock Cloudinary and Canvas
 jest.mock('cloudinary', () => ({
@@ -12,11 +12,7 @@ jest.mock('cloudinary', () => ({
     },
   },
 }));
-jest.mock('canvas', () => ({
-  createCanvas: jest.fn(),
-  loadImage: jest.fn(),
-  registerFont: jest.fn(),
-}));
+
 
 describe('Image Service', () => {
   const mockDrawImage = jest.fn();

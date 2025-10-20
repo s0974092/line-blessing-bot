@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,9 +9,8 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
-// TODO: Add a font file to the project and register it.
-// For now, we rely on system-installed fonts.
-// registerFont('path/to/font.ttf', { family: 'MyFont' });
+// Register the custom font
+GlobalFonts.registerFromPath('./assets/fonts/LXGWWenKaiMonoTC-Regular.ttf', 'LXGW WenKai Mono TC');
 
 /**
  * Overlays text on an image.
@@ -29,7 +28,7 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
 
   // --- Text Styling ---
   const fontSize = image.width / 20; // Dynamic font size
-  ctx.font = `${fontSize}px Noto Sans TC`; // Using a commonly available font
+  ctx.font = `${fontSize}px 'LXGW WenKai Mono TC'`; // Use the registered font
   ctx.fillStyle = '#FFFFFF';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';

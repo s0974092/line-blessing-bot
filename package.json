@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "tsc && cp -r assets dist && cp themes.json dist && cp styles.json dist",
     "start": "node dist/index.js",
     "dev": "tsc -w & node --watch dist/index.js"
   },
@@ -24,7 +24,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@line/bot-sdk": "^10.3.0",
-    "canvas": "^3.2.0",
+    "@napi-rs/canvas": "^0.1.80",
     "cloudinary": "^2.7.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0"
