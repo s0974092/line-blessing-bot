@@ -1,0 +1,34 @@
+{
+  "styles": [
+    {
+      "id": "soft_realism",
+      "name": "🌸 柔光寫實風",
+      "prompt": "soft lighting, cinematic realism, warm tone, cozy atmosphere"
+    },
+    {
+      "id": "illustration",
+      "name": "🎨 插畫風",
+      "prompt": "cute digital illustration, pastel tone, kawaii style"
+    },
+    {
+      "id": "ink_painting",
+      "name": "🪷 東方水墨風",
+      "prompt": "Chinese ink painting, watercolor, minimal brush strokes"
+    },
+    {
+      "id": "zen_style",
+      "name": "🕊️ 佛系禪風",
+      "prompt": "Buddhist Zen style, lotus, sunlight, misty calm"
+    },
+    {
+      "id": "dreamy",
+      "name": "🌈 夢幻糖果風",
+      "prompt": "dreamy pastel colors, floating hearts and clouds, soft focus"
+    },
+    {
+      "id": "vintage",
+      "name": "💖 懷舊復古風",
+      "prompt": "vintage film photo, nostalgic warm color, soft grain"
+    }
+  ]
+}

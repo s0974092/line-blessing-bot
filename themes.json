@@ -1,0 +1,40 @@
+{
+  "themes": [
+    {
+      "id": "good_morning",
+      "name": "🌅 早安問候",
+      "defaultText": "早安～祝你開心每一天 ☀️",
+      "prompt": "morning sunlight, coffee, cozy room, {stylePrompt}"
+    },
+    {
+      "id": "good_night",
+      "name": "🌙 晚安祝福",
+      "defaultText": "晚安好夢 🌙",
+      "prompt": "night sky, stars, moonlight, warm light, {stylePrompt}"
+    },
+    {
+      "id": "birthday",
+      "name": "🎂 生日快樂",
+      "defaultText": "生日快樂 🎂",
+      "prompt": "colorful cake, balloons, candles, {stylePrompt}"
+    },
+    {
+      "id": "health",
+      "name": "🌻 健康平安",
+      "defaultText": "祝你健康平安 🌻",
+      "prompt": "sunny meadow, flowers, nature, {stylePrompt}"
+    },
+    {
+      "id": "festival",
+      "name": "❤️ 節慶祝福",
+      "defaultText": "佳節愉快！",
+      "prompt": "festive decorations, celebration, {stylePrompt}"
+    },
+    {
+      "id": "encouragement",
+      "name": "💪 鼓勵打氣",
+      "defaultText": "加油！祝你一切順利！",
+      "prompt": "inspirational scene, warm light, {stylePrompt}"
+    }
+  ]
+}
