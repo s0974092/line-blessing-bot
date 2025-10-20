@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import fs from 'fs';
+import { join } from 'path';
 import express, { Request, Response } from 'express';
 import * as line from '@line/bot-sdk';
 import { Theme, Style } from './types';
@@ -7,8 +8,8 @@ import { generateImage } from './ai';
 import { setUserState, getUserState, clearUserState } from './state';
 
 // --- 1. Load Data ---
-const themes: Theme[] = JSON.parse(fs.readFileSync('./themes.json', 'utf8')).themes;
-const styles: Style[] = JSON.parse(fs.readFileSync('./styles.json', 'utf8')).styles;
+const themes = JSON.parse(fs.readFileSync(join(__dirname, 'themes.json'), 'utf8'));
+const styles = JSON.parse(fs.readFileSync(join(__dirname, 'styles.json'), 'utf8'));
 
 // --- 2. Setup LINE SDK and Express ---
 const config: line.MiddlewareConfig & line.ClientConfig = {
@@ -71,7 +72,7 @@ async function handleTextMessage(event: line.MessageEvent) {
 
   } else {
     // This is a new conversation
-    const selectedTheme = themes.find(t => t.name === userText);
+    const selectedTheme = themes.find((t: Theme) => t.name === userText);
     if (selectedTheme) {
       return replyStyleSelection(event.replyToken, selectedTheme.id);
     } else {
@@ -88,8 +89,8 @@ async function handlePostback(event: line.PostbackEvent) {
   const themeId = postbackData.get('themeId');
   const styleId = postbackData.get('styleId');
 
-  const theme = themes.find(t => t.id === themeId);
-  const style = styles.find(s => s.id === styleId);
+  const theme = themes.find((t: Theme) => t.id === themeId);
+  const style = styles.find((s: Style) => s.id === styleId);
 
   if (!theme || !style) {
     return client.replyMessage(event.replyToken, { type: 'text', text: '抱歉，找不到對應的主題或風格。' });
@@ -104,7 +105,7 @@ async function handlePostback(event: line.PostbackEvent) {
 
 // --- 5. Message-sending functions ---
 function replyThemeSelection(replyToken: string) {
-  const quickReplyItems: line.QuickReplyItem[] = themes.map(theme => ({
+  const quickReplyItems: line.QuickReplyItem[] = themes.map((theme: Theme) => ({
     type: 'action',
     action: { type: 'message', label: theme.name, text: theme.name },
   }));
@@ -118,7 +119,7 @@ function replyThemeSelection(replyToken: string) {
 }
 
 function replyStyleSelection(replyToken: string, themeId: string) {
-  const columns: line.TemplateColumn[] = styles.map(style => ({
+  const columns: line.TemplateColumn[] = styles.map((style: Style) => ({
     thumbnailImageUrl: 'https://via.placeholder.com/240x240.png/f2f2f2/333333?text=' + encodeURIComponent(style.name.substring(2)),
     title: style.name,
     text: '點我選擇此風格',
