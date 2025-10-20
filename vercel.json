@@ -4,10 +4,5 @@
       "NODE_ENV": "production"
     }
   },
-  "installCommand": "npm install --platform=linux --arch=x64 --include=dev",
-  "functions": {
-    "dist/index.js": {
-      "includeFiles": "dist/**"
-    }
-  }
+  "installCommand": "npm install --platform=linux --arch=x64 --include=dev"
 }
