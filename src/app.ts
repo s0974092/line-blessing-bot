@@ -22,7 +22,6 @@ const config: line.MiddlewareConfig & line.ClientConfig = {
 
 const client = new line.Client(config);
 const app = express();
-app.use(express.json());
 
 // --- 3. Webhook Handler ---
 app.post('/webhook', line.middleware(config), (req: Request, res: Response) => {
