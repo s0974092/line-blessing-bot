@@ -25,6 +25,11 @@ const app = express();
 
 // --- 3. Webhook Handler ---
 app.post('/webhook', line.middleware(config), (req: Request, res: Response) => {
+  // Handle LINE webhook verification requests gracefully
+  if (!req.body || !req.body.events || req.body.events.length === 0) {
+    return res.status(200).end();
+  }
+
   Promise
     .all(req.body.events.map((event: line.WebhookEvent) => handleEvent(event)))
     .then((result) => res.json(result))
@@ -36,6 +41,7 @@ app.post('/webhook', line.middleware(config), (req: Request, res: Response) => {
 
 // --- 4. Event-handling functions ---
 async function handleEvent(event: line.WebhookEvent): Promise<any> {
+  console.log("Received LINE event.");
   if (event.type === 'postback') {
     return handlePostback(event);
   }
