@@ -3,7 +3,14 @@ import { Theme, Style } from './types';
 import { uploadImage, overlayTextOnImage } from './image';
 
 // --- 1. Setup ---
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+let genAI: GoogleGenerativeAI;
+try {
+  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+} catch (initError: any) {
+  console.error('Error initializing GoogleGenerativeAI:', initError);
+  // Exit the process if AI initialization fails, as it's a critical dependency
+  process.exit(1);
+}
 
 /**
  * Composes a prompt for image generation based on a theme and a style.
@@ -26,6 +33,8 @@ export function composePrompt(theme: Theme, style: Style): string {
  * @returns {Promise<string>} A promise that resolves to the public URL of the final image.
  */
 export async function generateImage(theme: Theme, style: Style, text: string): Promise<string> {
+  console.log("Entering generateImage function...");
+
   try {
     const prompt = composePrompt(theme, style);
 
@@ -54,6 +63,6 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
     if (error.message.includes('quota') || error.message.includes('429')) {
       return '今日免費額度已用完，請明天再試喔！';
     }
-    return '圖片生成失敗，請稍後再試。'
+    return `圖片生成失敗，請稍後再試。錯誤：${error.message || error}`;
   }
 }
