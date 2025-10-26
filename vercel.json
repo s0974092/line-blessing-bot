@@ -4,5 +4,11 @@
       "NODE_ENV": "production"
     }
   },
-  "installCommand": "npm install --platform=linux --arch=x64 --include=dev"
+  "installCommand": "npm install --platform=linux --arch=x64 --include=dev",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ]
 }

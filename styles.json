@@ -3,32 +3,38 @@
     {
       "id": "soft_realism",
       "name": "🌸 柔光寫實風",
-      "prompt": "soft lighting, cinematic realism, warm tone, cozy atmosphere"
+      "prompt": "soft lighting, cinematic realism, warm tone, cozy atmosphere",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120580/soft_realism_zplbaf.jpg"
     },
     {
       "id": "illustration",
       "name": "🎨 插畫風",
-      "prompt": "cute digital illustration, pastel tone, kawaii style"
+      "prompt": "cute digital illustration, pastel tone, kawaii style",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120580/illustration_tzajmr.jpg"
     },
     {
       "id": "ink_painting",
       "name": "🪷 東方水墨風",
-      "prompt": "Chinese ink painting, watercolor, minimal brush strokes"
+      "prompt": "Chinese ink painting, watercolor, minimal brush strokes",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120579/ink_painting_lwge5s.jpg"
     },
     {
       "id": "zen_style",
       "name": "🕊️ 佛系禪風",
-      "prompt": "Buddhist Zen style, lotus, sunlight, misty calm"
+      "prompt": "Buddhist Zen style, lotus, sunlight, misty calm",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120580/zen_style_iaika7.jpg"
     },
     {
       "id": "dreamy",
       "name": "🌈 夢幻糖果風",
-      "prompt": "dreamy pastel colors, floating hearts and clouds, soft focus"
+      "prompt": "dreamy pastel colors, floating hearts and clouds, soft focus",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120579/dreamy_jq9cof.jpg"
     },
     {
       "id": "vintage",
       "name": "💖 懷舊復古風",
-      "prompt": "vintage film photo, nostalgic warm color, soft grain"
+      "prompt": "vintage film photo, nostalgic warm color, soft grain",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761120580/vintage_nbz2i4.jpg"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../src/app';
+import app from '../api/index';
 
 describe('GET /', () => {
   it('should respond with a 404 not found', (done) => {
