@@ -1,31 +1,40 @@
+import Redis from 'ioredis';
 import { Theme, Style } from './types';
 
 export interface UserState {
   theme: Theme;
   style: Style;
   timestamp: number;
+  // Optionally, you could add sourceId here if you want to store it within the state object
+  // sourceId?: string; 
 }
 
-// A simple in-memory state store. 
-// In a real-world application, you would use a database like Redis.
-const userState = new Map<string, UserState>();
+// Initialize Redis client
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
-const STATE_TTL = 5 * 60 * 1000; // 5 minutes
+redis.on('error', (err) => console.error('Redis Client Error', err));
 
-export function setUserState(userId: string, state: UserState) {
-  userState.set(userId, state);
+export const STATE_TTL = 5 * 60; // 5 minutes in seconds for Redis expire
+
+export async function setUserState(sourceId: string, state: UserState) {
+  await redis.set(sourceId, JSON.stringify(state), 'EX', STATE_TTL);
 }
 
-export function getUserState(userId: string): UserState | undefined {
-  const state = userState.get(userId);
-  if (state && (Date.now() - state.timestamp > STATE_TTL)) {
-    // State has expired
-    userState.delete(userId);
-    return undefined;
+export async function getUserState(sourceId: string): Promise<UserState | undefined> {
+  const stateStr = await redis.get(sourceId);
+  if (stateStr) {
+    const state = JSON.parse(stateStr) as UserState;
+    // Check if the state has expired
+    if (Date.now() - state.timestamp > STATE_TTL * 1000) {
+      // State has expired, clear it and return undefined
+      await clearUserState(sourceId);
+      return undefined;
+    }
+    return state;
   }
-  return state;
+  return undefined;
 }
 
-export function clearUserState(userId: string) {
-  userState.delete(userId);
+export async function clearUserState(sourceId: string) {
+  await redis.del(sourceId);
 }

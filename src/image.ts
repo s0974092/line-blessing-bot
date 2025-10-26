@@ -1,18 +1,10 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { Readable } from 'stream';
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { join } from 'path';
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET,
-});
 
 // Register the custom font
 const fontPath = join(__dirname, '../assets/fonts/LXGWWenKaiMonoTC-Regular.ttf');
 GlobalFonts.registerFromPath(fontPath, 'LXGW WenKai Mono TC');
+GlobalFonts.registerFromPath(join(__dirname, '../assets/fonts/NotoColorEmoji-Regular.ttf'), 'Noto Color Emoji');
 
 /**
  * Overlays text on an image.
@@ -25,55 +17,141 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
   const canvas = createCanvas(image.width, image.height);
   const ctx = canvas.getContext('2d');
 
+  const emojiMap: { [key: string]: string } = {
+    '(hands together)': '1F64F', // Unicode for 🙏
+    // Add more LINE emoji text descriptions and their corresponding Unicode emojis here
+  };
+
+  let processedText = text;
+  const emojisToRender: { unicode: string; originalIndex: number; }[] = [];
+
+  for (const key in emojiMap) {
+    const unicode = emojiMap[key];
+    const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); // Escape special characters for regex
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      emojisToRender.push({ unicode, originalIndex: match.index });
+    }
+    processedText = processedText.replace(regex, ' '); // Replace emoji text with a space for layout
+  }
+
+  // Sort emojis by their original index to maintain order
+  emojisToRender.sort((a, b) => a.originalIndex - b.originalIndex);
+
+  console.log('Original text:', text);
+  console.log('Processed text (with empty strings for emojis):', processedText);
+  console.log('Emojis to render:', emojisToRender);
+
   // Draw the original image
   ctx.drawImage(image, 0, 0);
 
   // --- Text Styling ---
   const fontSize = image.width / 20; // Dynamic font size
-  ctx.font = `${fontSize}px 'LXGW WenKai Mono TC'`; // Use the registered font
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
+  ctx.font = `${fontSize}px 'LXGW WenKai Mono TC', 'sans-serif'`; // Use the registered font, Noto Color Emoji will be loaded as image
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle'; // Set text baseline to middle for vertical centering
 
-  // --- Text Shadow for better readability ---
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-  ctx.shadowOffsetX = 3;
-  ctx.shadowOffsetY = 3;
-  ctx.shadowBlur = 5;
+  // Create a unified content array for layout calculation
+  const contentElements: { type: 'text' | 'emoji'; value: string; originalIndex: number; }[] = [];
+  let lastIndex = 0;
+  for (const emoji of emojisToRender) {
+    if (emoji.originalIndex > lastIndex) {
+      contentElements.push({ type: 'text', value: text.substring(lastIndex, emoji.originalIndex), originalIndex: lastIndex });
+    }
+    // Calculate the length of the original emoji text description
+    const emojiTextDescriptionLength = Object.keys(emojiMap).find(key => emojiMap[key] === emoji.unicode)?.length || 1; // Default to 1 if not found
+    contentElements.push({ type: 'emoji', value: emoji.unicode, originalIndex: emoji.originalIndex });
+    lastIndex = emoji.originalIndex + emojiTextDescriptionLength;
+  }
+  if (lastIndex < text.length) {
+    contentElements.push({ type: 'text', value: text.substring(lastIndex), originalIndex: lastIndex });
+  }
+
+  // Calculate text metrics for layout
+  const lines: { elements: typeof contentElements; width: number; }[] = [];
+  let currentLineElements: typeof contentElements = [];
+  let currentLineWidth = 0;
+  const emojiSize = fontSize; // Emoji size consistent with font size
+
+  for (const element of contentElements) {
+    let elementWidth = 0;
+    if (element.type === 'text') {
+      elementWidth = ctx.measureText(element.value).width;
+    } else { // type === 'emoji'
+      elementWidth = emojiSize;
+    }
+
+    // Simple line breaking for now (no word wrap)
+    // If adding this element exceeds image width, start a new line
+    // This logic needs to be more robust for actual word wrapping
+    if (currentLineWidth + elementWidth > image.width && currentLineElements.length > 0) {
+      lines.push({ elements: currentLineElements, width: currentLineWidth });
+      currentLineElements = [];
+      currentLineWidth = 0;
+    }
+
+    currentLineElements.push(element);
+    currentLineWidth += elementWidth;
+  }
+  if (currentLineElements.length > 0) {
+    lines.push({ elements: currentLineElements, width: currentLineWidth });
+  }
+
+  const lineHeight = fontSize * 1.2; // 1.2 times font size for line height
 
   // Position text at the bottom center
   const x = canvas.width / 2;
-  const y = canvas.height - (fontSize * 1.5); // Margin from bottom
 
-  ctx.fillText(text, x, y);
+  let maxContentWidth = 0;
+  for (const line of lines) {
+    if (line.width > maxContentWidth) {
+      maxContentWidth = line.width;
+    }
+  }
+
+  const padding = fontSize / 4;
+  const bgWidth = maxContentWidth + (padding * 2);
+  const bgHeight = (lines.length * lineHeight) + (padding * 2);
+
+  const bgX = x - (bgWidth / 2);
+  const bgY = canvas.height - (fontSize * 1.5) - bgHeight; // Position background from bottom with margin
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent black
+  ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
+  // --- Text Styling (after background) ---
+  ctx.fillStyle = '#FFFFFF'; // White text
+
+  // Render each line and overlay emojis
+  const startY = bgY + padding + lineHeight / 2; // Start Y for the middle of the first line
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const currentY = startY + i * lineHeight;
+
+    let currentLineX = x - line.width / 2; // Start X for the current line, based on its calculated width
+
+    for (const element of line.elements) {
+      if (element.type === 'text') {
+        ctx.fillText(element.value, currentLineX, currentY);
+        currentLineX += ctx.measureText(element.value).width;
+      } else { // type === 'emoji'
+        const emojiUrl = `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${element.value.toLowerCase()}.png`;
+        console.log(`Attempting to load emoji from: ${emojiUrl}`);
+        try {
+          const emojiImage = await loadImage(emojiUrl);
+          console.log(`Successfully loaded emoji image for ${element.value}`);
+          ctx.drawImage(emojiImage, currentLineX, currentY - emojiSize / 2, emojiSize, emojiSize); // Adjust y for middle baseline
+        } catch (error: any) {
+          console.error(`Failed to load emoji image ${element.value} from ${emojiUrl}:`, error.message);
+          // Fallback to text if image fails to load
+          ctx.fillText('□', currentLineX, currentY);
+        }
+        currentLineX += emojiSize;
+      }
+    }
+  }
 
   return canvas.toBuffer('image/png');
 }
 
-/**
- * Uploads an image buffer to Cloudinary.
- * @param {Buffer} buffer The image buffer to upload.
- * @returns {Promise<string>} A promise that resolves to the public URL of the uploaded image.
- */
-export async function uploadImage(buffer: Buffer): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { resource_type: 'image' },
-      (error, result) => {
-        if (error) {
-          return reject(error);
-        }
-        if (!result) {
-          return reject(new Error('Cloudinary upload failed to return a result.'));
-        }
-        resolve(result.secure_url);
-      }
-    );
-
-    const readable = new Readable();
-    readable._read = () => {}; // _read is required but you can noop it
-    readable.push(buffer);
-    readable.push(null);
-    readable.pipe(stream);
-  });
-}

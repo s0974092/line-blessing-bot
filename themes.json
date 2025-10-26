@@ -3,38 +3,44 @@
     {
       "id": "good_morning",
       "name": "🌅 早安問候",
-      "defaultText": "早安～祝你開心每一天 ☀️",
-      "prompt": "morning sunlight, coffee, cozy room, {stylePrompt}"
+      "defaultText": "早安～祝你開心每一天",
+      "prompt": "morning sunlight, coffee, cozy room, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410292/good_morning_ksc3ra.jpg"
     },
     {
       "id": "good_night",
       "name": "🌙 晚安祝福",
-      "defaultText": "晚安好夢 🌙",
-      "prompt": "night sky, stars, moonlight, warm light, {stylePrompt}"
+      "defaultText": "晚安好夢",
+      "prompt": "night sky, stars, moonlight, warm light, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410291/good_night_abz14d.jpg"
     },
     {
       "id": "birthday",
       "name": "🎂 生日快樂",
-      "defaultText": "生日快樂 🎂",
-      "prompt": "colorful cake, balloons, candles, {stylePrompt}"
+      "defaultText": "生日快樂",
+      "prompt": "colorful cake, balloons, candles, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410292/birthday_mkuwzd.jpg"
     },
     {
       "id": "health",
       "name": "🌻 健康平安",
-      "defaultText": "祝你健康平安 🌻",
-      "prompt": "sunny meadow, flowers, nature, {stylePrompt}"
+      "defaultText": "祝你健康平安",
+      "prompt": "sunny meadow, flowers, nature, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410292/health_k53ijg.jpg"
     },
     {
       "id": "festival",
       "name": "❤️ 節慶祝福",
       "defaultText": "佳節愉快！",
-      "prompt": "festive decorations, celebration, {stylePrompt}"
+      "prompt": "festive decorations, celebration, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410292/festival_vj9h6j.jpg"
     },
     {
       "id": "encouragement",
       "name": "💪 鼓勵打氣",
       "defaultText": "加油！祝你一切順利！",
-      "prompt": "inspirational scene, warm light, {stylePrompt}"
+      "prompt": "inspirational scene, warm light, {stylePrompt}",
+      "thumbnail": "https://res.cloudinary.com/dpvdyk4bn/image/upload/v1761410291/encouragement_ej8nl2.jpg"
     }
   ]
 }

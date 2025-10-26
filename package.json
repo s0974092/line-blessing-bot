@@ -2,12 +2,12 @@
   "name": "line-blessing-bot",
   "version": "1.0.0",
   "description": "🪷 LINE AI 長輩圖生成系統規格書",
-  "main": "dist/src/index.js",
+  "main": "dist/api/index.js",
   "scripts": {
     "test": "jest",
-    "build": "tsc && mkdir -p dist/assets/fonts && cp assets/fonts/LXGWWenKaiMonoTC-Regular.ttf dist/assets/fonts/ && cp themes.json dist/ && cp styles.json dist/",
-    "start": "node dist/src/index.js",
-    "dev": "tsc -w & node --watch dist/index.js"
+    "build": "tsc && mkdir -p dist/assets/fonts && cp assets/fonts/LXGWWenKaiMonoTC-Regular.ttf dist/assets/fonts/ && cp assets/fonts/NotoColorEmoji-Regular.ttf dist/assets/fonts/ && cp themes.json dist/ && cp styles.json dist/",
+    "start": "node dist/api/index.js",
+    "dev": "nodemon api/index.ts"
   },
   "repository": {
     "type": "git",
@@ -25,9 +25,12 @@
     "@google/generative-ai": "^0.24.1",
     "@line/bot-sdk": "^10.3.0",
     "@napi-rs/canvas": "^0.1.80",
+    "@napi-rs/canvas-darwin-arm64": "^0.1.80",
     "cloudinary": "^2.7.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "ioredis": "^5.4.1",
+    "node-fetch": "^3.3.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
@@ -35,8 +38,11 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.8.1",
     "@types/supertest": "^6.0.3",
+    "ioredis-mock": "^8.13.0",
     "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
-    "ts-jest": "^29.4.5"
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2"
   }
 }

@@ -1,4 +1,5 @@
-import { uploadImage, overlayTextOnImage } from '../src/image';
+import { jest } from '@jest/globals';
+import { overlayTextOnImage } from '../src/image';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable, Writable } from 'stream';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
@@ -24,7 +25,7 @@ describe('Image Service', () => {
     jest.clearAllMocks();
 
     // Mock implementation for createCanvas
-    (createCanvas as jest.Mock).mockImplementation((width, height) => ({
+    (createCanvas as jest.MockedFunction<any>).mockImplementation((width: number, height: number) => ({
       width,
       height,
       getContext: jest.fn(() => ({
@@ -39,11 +40,13 @@ describe('Image Service', () => {
         shadowOffsetX: 0,
         shadowOffsetY: 0,
         shadowBlur: 0,
+        measureText: jest.fn(() => ({ width: 100 })), // Mock measureText
+        fillRect: jest.fn(), // Mock fillRect
       })),
       toBuffer: mockToBuffer,
     }));
 
-    (loadImage as jest.Mock).mockResolvedValue({ width: 1024, height: 1024 });
+    (loadImage as jest.MockedFunction<any>).mockResolvedValue({ width: 1024, height: 1024 });
   });
 
   describe('overlayTextOnImage', () => {
@@ -56,13 +59,9 @@ describe('Image Service', () => {
       expect(loadImage).toHaveBeenCalledWith(imageBuffer);
       expect(createCanvas).toHaveBeenCalledWith(1024, 1024);
       expect(mockDrawImage).toHaveBeenCalled();
-      expect(mockFillText).toHaveBeenCalledWith(text, 512, expect.any(Number));
+      expect(mockFillText).toHaveBeenCalledWith(text, expect.any(Number), expect.any(Number));
       expect(mockToBuffer).toHaveBeenCalledWith('image/png');
       expect(result).toBeInstanceOf(Buffer);
     });
-  });
-
-  describe('uploadImage', () => {
-    // ... (existing tests for uploadImage)
   });
 });
