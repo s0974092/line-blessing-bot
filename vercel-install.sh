@@ -16,7 +16,11 @@ yum install -y gcc-c++ cairo-devel pango-devel libjpeg-turbo-devel giflib-devel 
 
 echo "--- Copying shared libraries ---"
 mkdir -p lib
+echo "Checking for source library file at /usr/lib64/libpixman-1.so.0:"
+ls -l /usr/lib64/libpixman-1.so.0
 cp /usr/lib64/libpixman-1.so.0 ./lib
+echo "--- Contents of lib/ folder ---"
+ls -lR lib
 
 
 echo "--- Installing Node Dependencies ---"
