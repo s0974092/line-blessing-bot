@@ -1,4 +1,5 @@
 
+import fetch from 'node-fetch';
 import { Theme, Style } from './types';
 import { overlayTextOnImage } from './image';
 import { generateBlessingText } from './gemini';
@@ -48,7 +49,6 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
   console.log("Entering generateImage function...");
 
   try {
-    const fetch = (await import('node-fetch')).default;
     let blessingTextToOverlay = text;
     if (!text) { // If text is empty, generate it using AI
       console.log('No text provided, generating blessing text with AI...');

@@ -138,4 +138,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vercel
-package-lock.json
+npm-ls.txt
+npm-ls-all.txt
+
+
