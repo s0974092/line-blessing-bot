@@ -14,5 +14,10 @@ echo "--- End of Debug ---"
 echo "--- Installing System Dependencies ---"
 yum install -y gcc-c++ cairo-devel pango-devel libjpeg-turbo-devel giflib-devel librsvg2-devel pixman
 
+echo "--- Copying shared libraries ---"
+mkdir -p lib
+cp /usr/lib64/libpixman-1.so.0 ./lib
+
+
 echo "--- Installing Node Dependencies ---"
 npm install --platform=linux --arch=x64 --include=dev

@@ -4,6 +4,9 @@
       "NODE_ENV": "production"
     }
   },
+  "env": {
+    "LD_LIBRARY_PATH": "/var/task/lib"
+  },
   "installCommand": "./vercel-install.sh",
   "rewrites": [
     {
