@@ -4,7 +4,6 @@
   "description": "🪷 LINE AI 長輩圖生成系統規格書",
   "main": "dist/api/index.js",
   "scripts": {
-    "preinstall": "apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev",
     "test": "jest",
     "build": "tsc && mkdir -p dist/assets/fonts && cp assets/fonts/LXGWWenKaiMonoTC-Regular.ttf dist/assets/fonts/ && cp assets/fonts/NotoColorEmoji-Regular.ttf dist/assets/fonts/ && cp themes.json dist/ && cp styles.json dist/",
     "start": "node dist/api/index.js",
