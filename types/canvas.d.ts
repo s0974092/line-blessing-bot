@@ -1,4 +1,13 @@
 // This declaration file is used to satisfy the TypeScript compiler during the Vercel build.
-// It tells TypeScript that a module named 'canvas' exists, even though it is not installed in the production environment.
-// This prevents build errors related to the conditional import in src/image.ts.
-declare module 'canvas';
+// It provides minimal type information for the 'canvas' module to prevent build errors.
+
+declare module 'canvas' {
+  // Provide minimal, placeholder types.
+  export interface Canvas {}
+  export interface Image {}
+
+  // Declare the functions that are dynamically required in the code.
+  export function createCanvas(width: number, height: number): Canvas;
+  export function loadImage(src: Buffer | string): Promise<Image>;
+  export function registerFont(fontPath: string, options: { family: string }): void;
+}
