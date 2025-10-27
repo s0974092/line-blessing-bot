@@ -1,5 +1,12 @@
-// This declaration file is used to satisfy the TypeScript compiler during the Vercel build.
-// It provides a more complete (but still placeholder) definition of the 'canvas' module's types.
+// [檔案核心意義]
+// 本檔案的核心目的，是為了解決在 Vercel 生產環境中，因缺少 `canvas` 套件而導致的 TypeScript 編譯失敗問題。
+//
+// [問題說明]
+// 我們的程式碼只在本地開發時載入 `canvas` 套件，但在 Vercel 建置時，TypeScript 編譯器依然會檢查到這段程式碼，並因找不到 `canvas` 套件的型別定義而報錯。
+//
+// [解決方案]
+// 這個檔案提供了一個「假的」模組藍圖 (Module Blueprint)，向編譯器「承諾」`canvas` 模組及其內部型別的存在。
+// 這使得 TypeScript 編譯能順利通過，而在實際執行階段 (Runtime)，此檔案會被完全忽略，程式會根據環境載入正確的 `node-canvas` 或 `@napi-rs/canvas` 套件。
 
 declare module 'canvas' {
   // Define the types with the properties and methods our application actually uses.

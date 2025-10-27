@@ -1,5 +1,6 @@
 import { join } from 'path';
 import type { Canvas, Image } from 'canvas';
+import { config } from './config';
 
 // --- Hybrid Module Loading ---
 // This section dynamically selects the canvas library based on the environment.
@@ -77,7 +78,7 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
   ctx.drawImage(image, 0, 0);
 
   // --- Text Styling ---
-  const fontSize = image.width / 20; // Dynamic font size
+  const fontSize = image.width / config.image.fontSizeRatioDivisor; // Dynamic font size from config
   ctx.font = `${fontSize}px 'LXGW WenKai Mono TC', 'sans-serif'`; // Use the registered font, Noto Color Emoji will be loaded as image
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle'; // Set text baseline to middle for vertical centering
@@ -147,11 +148,11 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
   const bgX = x - (bgWidth / 2);
   const bgY = canvas.height - (fontSize * 1.5) - bgHeight; // Position background from bottom with margin
 
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Semi-transparent black
+  ctx.fillStyle = config.image.bgColorRgba; // Use background color from config
   ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
 
   // --- Text Styling (after background) ---
-  ctx.fillStyle = '#FFFFFF'; // White text
+  ctx.fillStyle = config.image.textColorHex; // Use text color from config
 
   // Render each line and overlay emojis
   const startY = bgY + padding + lineHeight / 2; // Start Y for the middle of the first line

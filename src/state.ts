@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import { Theme, Style } from './types';
+import { config } from './config';
 
 export interface UserState {
   theme: Theme;
@@ -9,15 +10,13 @@ export interface UserState {
   // sourceId?: string; 
 }
 
-// Initialize Redis client
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+// Initialize Redis client using config
+const redis = new Redis(config.redis.url);
 
 redis.on('error', (err) => console.error('Redis Client Error', err));
 
-export const STATE_TTL = 5 * 60; // 5 minutes in seconds for Redis expire
-
 export async function setUserState(sourceId: string, state: UserState) {
-  await redis.set(sourceId, JSON.stringify(state), 'EX', STATE_TTL);
+  await redis.set(sourceId, JSON.stringify(state), 'EX', config.userState.ttlSeconds);
 }
 
 export async function getUserState(sourceId: string): Promise<UserState | undefined> {
@@ -25,7 +24,7 @@ export async function getUserState(sourceId: string): Promise<UserState | undefi
   if (stateStr) {
     const state = JSON.parse(stateStr) as UserState;
     // Check if the state has expired
-    if (Date.now() - state.timestamp > STATE_TTL * 1000) {
+    if (Date.now() - state.timestamp > config.userState.ttlSeconds * 1000) {
       // State has expired, clear it and return undefined
       await clearUserState(sourceId);
       return undefined;
