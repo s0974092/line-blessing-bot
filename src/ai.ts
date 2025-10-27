@@ -1,5 +1,3 @@
-
-import fetch from 'node-fetch';
 import { Theme, Style } from './types';
 import { overlayTextOnImage } from './image';
 import { generateBlessingText } from './gemini';
@@ -80,7 +78,9 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
           throw new Error(`Failed to fetch image from Pollinations.ai: ${response.statusText}`);
         }
 
-        originalImageBuffer = await response.buffer();
+        // Fix: Use .arrayBuffer() and Buffer.from() instead of .buffer(), which does not exist on Response
+        const arrayBuffer = await response.arrayBuffer();
+        originalImageBuffer = Buffer.from(arrayBuffer);
         break; // Success, break out of retry loop
       } catch (retryError: any) {
         console.error(`Attempt ${i + 1} failed:`, retryError.message);
