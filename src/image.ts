@@ -1,10 +1,10 @@
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { join } from 'path';
 
 // Register the custom font
 const fontPath = join(__dirname, '../assets/fonts/LXGWWenKaiMonoTC-Regular.ttf');
-registerFont(fontPath, { family: 'LXGW WenKai Mono TC' });
-registerFont(join(__dirname, '../assets/fonts/NotoColorEmoji-Regular.ttf'), { family: 'Noto Color Emoji' });
+GlobalFonts.registerFromPath(fontPath, 'LXGW WenKai Mono TC');
+GlobalFonts.registerFromPath(join(__dirname, '../assets/fonts/NotoColorEmoji-Regular.ttf'), 'Noto Color Emoji');
 
 /**
  * Overlays text on an image.
