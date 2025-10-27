@@ -22,20 +22,6 @@ export function composePrompt(theme: Theme, style: Style, blessingText: string):
   return basePrompt;
 }
 
-// async function listAvailableModels() {
-//   try {
-//     const models = await genAI.listModels();
-//     console.log("Available Gemini Models:");
-//     for (const model of models.models) {
-//       console.log(`- Name: ${model.name}, Supported Methods: ${model.supportedGenerationMethods?.join(', ')}`);
-//     }
-//   } catch (error) {
-//     console.error("Error listing models:", error);
-//   }
-// }
-
-// listAvailableModels();
-
 /**
  * Generates an image, overlays text, and uploads it.
  * @param {Theme} theme - The selected theme.

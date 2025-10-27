@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import fs from 'fs';
 import { join } from 'path';
 import express, { Request, Response } from 'express';
@@ -8,6 +7,7 @@ import { generateImage } from '../src/ai';
 import { setUserState, getUserState, clearUserState } from '../src/state';
 import { WebhookEvent } from '@line/bot-sdk';
 import { uploadImage, deleteImage } from '../src/cloudinary';
+import { config } from '../src/config';
 
 // --- 1. Load Data ---
 const themesPath = join(__dirname, '../themes.json');
@@ -16,23 +16,18 @@ const stylesPath = join(__dirname, '../styles.json');
 const themes: Theme[] = JSON.parse(fs.readFileSync(themesPath, 'utf8')).themes;
 const styles: Style[] = JSON.parse(fs.readFileSync(stylesPath, 'utf8')).styles;
 
-const MAX_TEXT_LENGTH = 20; // Recommended maximum length for single-line blessing text
-
-const TRIGGER_PHRASES = ['開始', '生成圖片', '長輩圖', '我想做圖', 'start', 'generate image'];
-
 // --- 2. Setup LINE SDK and Express ---
-const config: line.MiddlewareConfig & line.ClientConfig = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.CHANNEL_SECRET || '',
+const lineConfig: line.MiddlewareConfig & line.ClientConfig = {
+  channelAccessToken: config.line.channelAccessToken,
+  channelSecret: config.line.channelSecret,
 };
 
-const client = new line.Client(config);
+const client = new line.Client(lineConfig);
 const app = express();
-// app.get('/', (req: Request, res: Response) => res.send('LINE Gemini Calendar Bot is running!'));
+
 // --- 3. Webhook Handler ---
-app.post('/api/webhook', line.middleware(config), async (req: Request, res: Response) => {
+app.post('/api/webhook', line.middleware(lineConfig), async (req: Request, res: Response) => {
   console.log('Webhook received!');
-  // Handle LINE webhook verification requests gracefully
   try {
     const events: WebhookEvent[] = req.body.events;
     console.log('events', events);
@@ -47,7 +42,18 @@ app.post('/api/webhook', line.middleware(config), async (req: Request, res: Resp
   }
 });
 
-// --- 4. Event-handling functions ---
+// --- 4. Helper Functions ---
+
+/**
+ * Generates a dynamic welcome message using the template from config.
+ * @returns The fully constructed welcome message string.
+ */
+function getDynamicWelcomeMessage(): string {
+  const triggerKeywords = config.bot.triggerKeywords.map(phrase => `「${phrase}」`).join('、');
+  return config.bot.welcomeMessage.replace('{keywords}', triggerKeywords);
+}
+
+// --- 5. Event-handling functions ---
 async function handleEvent(event: line.WebhookEvent): Promise<any> {
   console.log("Received LINE event.");
   let sourceId: string | undefined;
@@ -77,8 +83,7 @@ async function handleEvent(event: line.WebhookEvent): Promise<any> {
 }
 
 async function sendWelcomeMessage(replyToken: string) {
-  const triggerKeywords = TRIGGER_PHRASES.map(phrase => `「${phrase}」`).join('、');
-  const welcomeText = `哈囉！我是您的專屬長輩圖生成器！🌸\n\n您可以透過我輕鬆生成帶有祝福語的圖片，並分享給親朋好友。\n\n請輸入 ${triggerKeywords} 來製作您的第一張長輩圖吧！`;
+  const welcomeText = getDynamicWelcomeMessage();
   await client.replyMessage(replyToken, {
     type: 'text',
     text: welcomeText,
@@ -88,11 +93,12 @@ async function sendWelcomeMessage(replyToken: string) {
 }
 
 async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
-      const userText = (event.message as line.TextMessage).text;
-      console.log('User text:', userText);
-      const userState = await getUserState(sourceId);
+  const userText = (event.message as line.TextMessage).text;
+  console.log('User text:', userText);
+  const userState = await getUserState(sourceId);
   const normalizedUserText = userText.toLowerCase().trim();
-  if (TRIGGER_PHRASES.some(phrase => normalizedUserText.includes(phrase))) {
+
+  if (config.bot.triggerKeywords.some(phrase => normalizedUserText.includes(phrase.toLowerCase()))) {
     await clearUserState(sourceId);
     return replyThemeSelection(event.replyToken);
   }
@@ -110,12 +116,11 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
     }
 
     // --- Text length validation ---
-    console.log(`Validating text: "${text}" (length: ${text.length}), MAX_TEXT_LENGTH: ${MAX_TEXT_LENGTH}`);
-    if (text.length > MAX_TEXT_LENGTH) {
-      return client.replyMessage(event.replyToken, { type: 'text', text: `祝福語長度超過 ${MAX_TEXT_LENGTH} 字，請重新輸入。` });
+    console.log(`Validating text: "${text}" (length: ${text.length}), MAX_TEXT_LENGTH: ${config.bot.maxTextLength}`);
+    if (text.length > config.bot.maxTextLength) {
+      return client.replyMessage(event.replyToken, { type: 'text', text: `祝福語長度超過 ${config.bot.maxTextLength} 字，請重新輸入。` });
     }
 
-    // If style is empty (meaning user selected theme but not style yet), default to the first style
     if (Object.keys(style).length === 0) {
       style = styles[0];
       styleInfo = `（預設風格：${style.name}）`;
@@ -140,22 +145,15 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
       const imageBuffer = await generateImage(userState.theme, userState.style, text);
       const imageUrl = await uploadImage(imageBuffer);
 
-      // Extract publicId from Cloudinary URL for deletion
       const urlParts = imageUrl.split('/');
       cloudinaryPublicId = urlParts[urlParts.length - 1].split('.')[0];
 
       const message = { type: 'image', originalContentUrl: imageUrl, previewImageUrl: imageUrl } as line.ImageMessage;
 
-      // Use sourceId for pushMessage as replyToken might expire
       await client.pushMessage(sourceId, message);
-
-      // Add a 10-second delay to ensure LINE has time to process the image
-      await new Promise(resolve => setTimeout(resolve, 10000));
-
-      // Clear user state ONLY after successful image generation and message sending
+      await new Promise(resolve => setTimeout(resolve, config.bot.imageDeletionDelayMs));
       await clearUserState(sourceId);
 
-      // Delete image from Cloudinary after successful LINE message sending
       if (cloudinaryPublicId) {
         await deleteImage(cloudinaryPublicId);
         console.log(`Deleted image ${cloudinaryPublicId} from Cloudinary.`);
@@ -165,36 +163,24 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
       console.error('Error in image generation or upload process:', error);
       await client.pushMessage(sourceId, {
         type: 'text',
-        text: `圖片生成或上傳失敗，請稍後再試。錯誤：${error.message || '未知錯誤'}`,
+        text: config.bot.generationErrorMessage, // Use centralized error message
       });
     }
 
   } else {
     // This is a new conversation or state has expired
-    const normalizedUserText = userText.toLowerCase().trim();
-
     const selectedTheme = themes.find((t: Theme) => t.name === userText);
 
     if (selectedTheme) {
-      // User selected a theme from the quick reply menu
-      // Set the theme in user state, but without a style yet
       await setUserState(sourceId, { theme: selectedTheme, style: {} as Style, timestamp: Date.now() });
-      // Then prompt for style selection
       return replyStyleSelection(event.replyToken, selectedTheme.id);
-    } else if (TRIGGER_PHRASES.some(phrase => normalizedUserText.includes(phrase))) {
-      // User used a trigger phrase, start theme selection
-      // The replyThemeSelection will be called, which presents the quick reply menu.
-      return replyThemeSelection(event.replyToken);
     } else {
-      // Not a trigger phrase or theme selection
       if (event.source.type === 'user') {
-        // Only send polite message in 1:1 chat
         return client.replyMessage(event.replyToken, {
           type: 'text',
-          text: '您好！若要開始生成長輩圖，請輸入「開始」、「生成圖片」或「長輩圖」等關鍵字。'
+          text: getDynamicWelcomeMessage(), // Use centralized, dynamic welcome message
         });
       } else {
-        // In group/room, do nothing if not a trigger phrase
         return Promise.resolve(null);
       }
     }
@@ -213,19 +199,16 @@ async function handlePostback(event: line.PostbackEvent, sourceId: string) {
     return client.replyMessage(event.replyToken, { type: 'text', text: '抱歉，找不到對應的主題或風格。' });
   }
 
-  // Save user's state
   await setUserState(sourceId, { theme, style, timestamp: Date.now() });
-
-  // Ask for blessing text
   return replyTextPrompt(event.replyToken, theme.defaultText);
 }
 
-// --- 5. Message-sending functions ---
+// --- 6. Message-sending functions ---
 function replyThemeSelection(replyToken: string) {
   const columns: line.TemplateColumn[] = themes.map((theme: Theme) => ({
-    thumbnailImageUrl: theme.thumbnail, // Use theme.thumbnail
+    thumbnailImageUrl: theme.thumbnail,
     title: theme.name,
-    text: '點擊選擇此主題', // Concise text
+    text: '點擊選擇此主題',
     actions: [
       { type: 'message', label: '選擇', text: theme.name } as line.Action,
     ],
@@ -263,7 +246,7 @@ function replyStyleSelection(replyToken: string, themeId: string) {
 function replyTextPrompt(replyToken: string, defaultText: string) {
   const message: line.TextMessage = {
     type: 'text',
-    text: `要加上祝福語嗎？可以直接輸入，或使用預設文字。✍️ (建議字數不超過 ${MAX_TEXT_LENGTH} 字，以確保圖片美觀)`,
+    text: `要加上祝福語嗎？可以直接輸入，或使用預設文字。✍️ (建議字數不超過 ${config.bot.maxTextLength} 字，以確保圖片美觀)`,
     quickReply: {
       items: [
         { type: 'action', action: { type: 'message', label: '用主題預設文字', text: '用主題預設文字' } },
@@ -276,8 +259,8 @@ function replyTextPrompt(replyToken: string, defaultText: string) {
 
 export default app;
 
-// Only listen on a port if not running in a serverless environment (e.g., Vercel)
-if (process.env.NODE_ENV === 'development' || (!process.env.NODE_ENV && !process.env.VERCEL_ENV)) {
+// Only listen on a port if in a local development environment
+if (config.env === 'development') {
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
     console.log(`Local server listening on port ${port}`);
