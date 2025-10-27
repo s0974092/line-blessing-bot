@@ -12,7 +12,7 @@ which apt-get || echo "apt-get not in PATH"
 echo "--- End of Debug ---"
 
 echo "--- Installing System Dependencies ---"
-apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+yum install -y gcc-c++ cairo-devel pango-devel libjpeg-turbo-devel giflib-devel librsvg2-devel
 
 echo "--- Installing Node Dependencies ---"
 npm install --platform=linux --arch=x64 --include=dev
