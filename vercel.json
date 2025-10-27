@@ -4,7 +4,7 @@
       "NODE_ENV": "production"
     }
   },
-  "installCommand": "echo '--- System Info ---' && uname -a && echo '--- OS Release ---' && cat /etc/os-release && echo '--- PATH ---' && echo $PATH && echo '--- End of Debug ---' && apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev && npm install --platform=linux --arch=x64 --include=dev",
+  "installCommand": "./vercel-install.sh",
   "rewrites": [
     {
       "source": "/(.*)",
