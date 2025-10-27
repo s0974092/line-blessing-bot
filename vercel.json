@@ -1,4 +1,5 @@
 {
+  "installCommand": "npm install --omit=dev",
   "build": {
     "env": {
       "NODE_ENV": "production"
