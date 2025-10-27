@@ -9,7 +9,9 @@ declare module 'canvas' {
   }
 
   export interface CanvasRenderingContext2D {
+    // Add all required overloads for drawImage
     drawImage(image: Image, dx: number, dy: number): void;
+    drawImage(image: Image, dx: number, dy: number, dWidth: number, dHeight: number): void;
     fillRect(x: number, y: number, w: number, h: number): void;
     fillText(text: string, x: number, y: number): void;
     measureText(text: string): { width: number };
