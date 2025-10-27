@@ -1,10 +1,41 @@
-import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { join } from 'path';
+import type { Canvas, Image } from 'canvas';
 
-// Register the custom font
+// --- Hybrid Module Loading ---
+// This section dynamically selects the canvas library based on the environment.
+// It uses the robust 'node-canvas' for local development (requires system dependencies)
+// and the zero-dependency '@napi-rs/canvas' for production environments like Vercel.
+
+let createCanvas: (width: number, height: number) => Canvas;
+let loadImage: (src: Buffer | string) => Promise<Image>;
+
+// A wrapper function to abstract the different font registration APIs.
+let registerFont: (fontPath: string, alias: string) => void;
+
+if (process.env.NODE_ENV === 'development') {
+  console.log("Using 'node-canvas' for local development.");
+  const canvas = require('canvas');
+  createCanvas = canvas.createCanvas;
+  loadImage = canvas.loadImage;
+  registerFont = (fontPath, alias) => {
+    canvas.registerFont(fontPath, { family: alias });
+  };
+} else {
+  console.log("Using '@napi-rs/canvas' for production.");
+  const napiCanvas = require('@napi-rs/canvas');
+  createCanvas = napiCanvas.createCanvas;
+  loadImage = napiCanvas.loadImage;
+  registerFont = (fontPath, alias) => {
+    napiCanvas.GlobalFonts.registerFromPath(fontPath, alias);
+  };
+}
+
+// --- Font Registration ---
+// Register the custom fonts using the abstracted function.
 const fontPath = join(__dirname, '../assets/fonts/LXGWWenKaiMonoTC-Regular.ttf');
-GlobalFonts.registerFromPath(fontPath, 'LXGW WenKai Mono TC');
-GlobalFonts.registerFromPath(join(__dirname, '../assets/fonts/NotoColorEmoji-Regular.ttf'), 'Noto Color Emoji');
+registerFont(fontPath, 'LXGW WenKai Mono TC');
+registerFont(join(__dirname, '../assets/fonts/NotoColorEmoji-Regular.ttf'), 'Noto Color Emoji');
+
 
 /**
  * Overlays text on an image.
@@ -27,7 +58,7 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
 
   for (const key in emojiMap) {
     const unicode = emojiMap[key];
-    const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); // Escape special characters for regex
+    const regex = new RegExp(key.replace(/[.*+?^${}()|[\\]/g, '\\$&'), 'g'); // Escape special characters for regex
     let match;
     while ((match = regex.exec(text)) !== null) {
       emojisToRender.push({ unicode, originalIndex: match.index });
@@ -154,4 +185,3 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
 
   return canvas.toBuffer('image/png');
 }
-

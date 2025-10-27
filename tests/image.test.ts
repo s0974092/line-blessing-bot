@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+jest.mock('@napi-rs/canvas');
 import { overlayTextOnImage } from '../src/image';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable, Writable } from 'stream';
