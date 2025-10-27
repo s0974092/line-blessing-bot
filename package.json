@@ -5,9 +5,10 @@
   "main": "dist/api/index.js",
   "scripts": {
     "test": "jest",
+    "install:local": "mv .npmrc .npmrc.bak || true && unset npm_config_prefix && export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\" && nvm exec 22 npm install --build-from-source --platform=darwin --arch=arm64 && mv .npmrc.bak .npmrc || true",
     "build": "tsc && mkdir -p dist/assets/fonts && cp assets/fonts/LXGWWenKaiMonoTC-Regular.ttf dist/assets/fonts/ && cp assets/fonts/NotoColorEmoji-Regular.ttf dist/assets/fonts/ && cp themes.json dist/ && cp styles.json dist/",
     "start": "node dist/api/index.js",
-    "dev": "nodemon api/index.ts"
+    "dev": "mv .npmrc .npmrc.bak || true && unset npm_config_prefix && export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && \\. \"$NVM_DIR/nvm.sh\" && nvm exec 22 env NODE_ENV=development npm_config_platform=darwin npm_config_arch=arm64 nodemon api/index.ts && mv .npmrc.bak .npmrc || true"
   },
   "repository": {
     "type": "git",
@@ -27,7 +28,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@line/bot-sdk": "^10.3.0",
-    "@napi-rs/canvas": "^0.1.80",
+    "@napi-rs/canvas": "0.1.81",
     "cloudinary": "^2.7.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -44,6 +45,7 @@
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "canvas": "^2.11.2"
   }
 }
