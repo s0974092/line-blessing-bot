@@ -15,8 +15,8 @@
     "url": "git+https://github.com/s0974092/line-blessing-bot.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jason YJ Lin",
+  "license": "MIT",
   "engines": {
     "node": "22.x"
   },
