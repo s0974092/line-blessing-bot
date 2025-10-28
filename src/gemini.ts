@@ -1,20 +1,18 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { Theme, Style } from './types';
 import { config } from './config';
 
-let generativeModel: GenerativeModel | undefined;
+let genAIInstance: GoogleGenAI | undefined;
 
-export function getGenerativeModel(): GenerativeModel {
-  if (!generativeModel) {
+export function getGoogleGenAIInstance(): GoogleGenAI {
+  if (!genAIInstance) {
     const apiKey = config.gemini.apiKey;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY is not set in environment variables.');
     }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = config.gemini.model;
-    generativeModel = genAI.getGenerativeModel({ model: modelName });
+    genAIInstance = new GoogleGenAI({apiKey: apiKey});
   }
-  return generativeModel;
+  return genAIInstance;
 }
 
 /**
@@ -25,7 +23,7 @@ export function getGenerativeModel(): GenerativeModel {
  * @returns {Promise<string>} A promise that resolves to the generated blessing text.
  */
 export async function generateBlessingText(theme: Theme, style: Style): Promise<string> {
-  const model = getGenerativeModel();
+  const genAI = getGoogleGenAIInstance();
   const prompt = config.gemini.promptTemplate
     .replace('{theme}', theme.name)
     .replace('{style}', style.name)
@@ -37,9 +35,8 @@ export async function generateBlessingText(theme: Theme, style: Style): Promise<
 
   while (attempts < maxAttempts) {
     try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const blessingText = response.text().trim();
+      const result = await genAI.models.generateContent({ model: config.gemini.model, contents: prompt });
+      const blessingText = result.text ? result.text.trim() : '';
 
       if (blessingText.length >= config.gemini.textMinLength && blessingText.length <= config.gemini.textMaxLength) {
         return blessingText;
@@ -64,9 +61,8 @@ export async function generateBlessingText(theme: Theme, style: Style): Promise<
     const fallbackPrompt = config.gemini.fallbackPromptTemplate
       .replace('{minLength}', String(config.gemini.textMinLength))
       .replace('{maxLength}', String(config.gemini.textMaxLength));
-    const result = await model.generateContent(fallbackPrompt);
-    const response = await result.response;
-    const blessingText = response.text().trim();
+    const result = await genAI.models.generateContent({ model: config.gemini.model, contents: fallbackPrompt });
+    const blessingText = result.text ? result.text.trim() : '';
 
     if (blessingText.length >= config.gemini.textMinLength && blessingText.length <= config.gemini.textMaxLength) {
       return blessingText;
