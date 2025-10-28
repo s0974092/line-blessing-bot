@@ -7,7 +7,7 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20.x-blue.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue.svg" alt="TypeScript" /></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Deploy-Vercel-black.svg" alt="Vercel" /></a>
-  <a href="./coverage/lcov-report/index.html"><img src="https://img.shields.io/badge/coverage-91.55%25-brightgreen" alt="Test Coverage" /></a>
+  <a href="./coverage/lcov-report/index.html"><img src="https://img.shields.io/badge/coverage-96.03%25-brightgreen" alt="Test Coverage" /></a>
 </p>
 
 Your exclusive blessing assistant! "Blessing Buddy" is a LINE chatbot that transforms into a "Fubao" (blessing baby) holding a heart, using AI to quickly generate and share beautiful images with warm blessings.

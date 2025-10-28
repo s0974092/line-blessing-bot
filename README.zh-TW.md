@@ -7,7 +7,7 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20.x-blue.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-blue.svg" alt="TypeScript" /></a>
   <a href="https://vercel.com/"><img src="https://img.shields.io/badge/Deploy-Vercel-black.svg" alt="Vercel" /></a>
-  <a href="./coverage/lcov-report/index.html"><img src="https://img.shields.io/badge/coverage-91.55%25-brightgreen" alt="Test Coverage" /></a>
+  <a href="./coverage/lcov-report/index.html"><img src="https://img.shields.io/badge/coverage-96.03%25-brightgreen" alt="Test Coverage" /></a>
 </p>
 
 你的專屬祝福小幫手！「祝福寶」是一個 LINE 聊天機器人，它化身為一個拿著愛心的福寶，用 AI 為你快速生成並分享帶有溫暖祝福的精美圖片。
