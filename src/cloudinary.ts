@@ -1,12 +1,14 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { config } from './config';
 
-// Configure Cloudinary using the separate keys from our central config
-cloudinary.config({
-  cloud_name: config.cloudinary.cloudName,
-  api_key: config.cloudinary.apiKey,
-  api_secret: config.cloudinary.apiSecret,
-});
+// Function to configure Cloudinary
+export function configureCloudinary() {
+  cloudinary.config({
+    cloud_name: config.cloudinary.cloudName,
+    api_key: config.cloudinary.apiKey,
+    api_secret: config.cloudinary.apiSecret,
+  });
+}
 
 /**
  * Uploads an image buffer to Cloudinary.

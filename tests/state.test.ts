@@ -1,52 +1,86 @@
+
+import type { Redis as RedisType } from 'ioredis';
 import Redis from 'ioredis-mock';
-import { setUserState, getUserState, clearUserState, STATE_TTL, UserState } from '../src/state';
-import { Theme, Style } from '../src/types';
+import { setUserState, getUserState, clearUserState, UserState } from '../src/state';
+import { config } from '../src/config';
 
-// Mock ioredis with ioredis-mock
-jest.mock('ioredis', () => {
-  return jest.fn().mockImplementation(() => {
-    // ioredis-mock constructor can be called with initial data
-    return new Redis();
-  });
-});
+// Mock the ioredis module
+jest.mock('ioredis', () => require('ioredis-mock'));
 
-const mockTheme: Theme = { id: 't1', name: 'Theme 1', defaultText: 'Default', prompt: '...', thumbnail: 'http://example.com/t1.png' };
-const mockStyle: Style = { id: 's1', name: 'Style 1', prompt: '...', thumbnail: 'http://example.com/s1.png' };
+// Mock the config module
+jest.mock('../src/config', () => ({
+  config: {
+    redis: {
+      url: 'redis://localhost:6379',
+    },
+    userState: {
+      ttlSeconds: 10, // Use a short TTL for testing
+    },
+  },
+}));
 
-describe('State Management', () => {
+describe('state management', () => {
+  let redis: RedisType;
 
-  // No need for beforeEach to clear state, as the mock is fresh for each test run with jest.resetModules()
   beforeEach(() => {
-    // Reset modules to ensure a fresh mock redis instance for each test
-    jest.resetModules();
+    // Create a new mock Redis instance for each test
+    redis = new Redis();
+    // Clear all data from the mock Redis instance
+    redis.flushall();
   });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const sourceId = 'testUser';
+  const userState: UserState = {
+    theme: { 
+      id: 'theme1', 
+      name: 'Test Theme', 
+      prompt: 'a test theme', 
+      defaultText: 'Default text', 
+      thumbnail: 'thumb.jpg' 
+    },
+    style: { 
+      id: 'style1', 
+      name: 'Test Style', 
+      prompt: 'a test style', 
+      thumbnail: 'thumb.jpg' 
+    },
+    timestamp: Date.now(),
+  };
 
   it('should set and get user state', async () => {
-    const state: UserState = { theme: mockTheme, style: mockStyle, timestamp: Date.now() };
-    await setUserState('test-user', state);
-    const retrievedState = await getUserState('test-user');
-    // Timestamps might be slightly different, so we compare the core properties
-    expect(retrievedState).toBeDefined();
-    expect(retrievedState).toEqual(expect.objectContaining({ theme: mockTheme, style: mockStyle }));
+    await setUserState(sourceId, userState);
+    const retrievedState = await getUserState(sourceId);
+    
+    expect(retrievedState).toEqual(userState);
   });
 
-  it('should return undefined for a non-existent user', async () => {
-    const retrievedState = await getUserState('non-existent-user');
+  it('should return undefined for non-existent state', async () => {
+    const retrievedState = await getUserState('nonExistentUser');
     expect(retrievedState).toBeUndefined();
   });
 
   it('should clear user state', async () => {
-    const state: UserState = { theme: mockTheme, style: mockStyle, timestamp: Date.now() };
-    await setUserState('test-user', state);
-    await clearUserState('test-user');
-    const retrievedState = await getUserState('test-user');
+    await setUserState(sourceId, userState);
+    let retrievedState = await getUserState(sourceId);
+    expect(retrievedState).not.toBeUndefined();
+
+    await clearUserState(sourceId);
+    retrievedState = await getUserState(sourceId);
     expect(retrievedState).toBeUndefined();
   });
 
   it('should return undefined for expired state', async () => {
-    const expiredState: UserState = { theme: mockTheme, style: mockStyle, timestamp: Date.now() - (STATE_TTL * 1000) - 1000 }; // Expired 1 second ago
-    await setUserState('test-user-expired', expiredState);
-    const retrievedState = await getUserState('test-user-expired');
+    const expiredState: UserState = {
+      ...userState,
+      timestamp: Date.now() - (config.userState.ttlSeconds + 1) * 1000,
+    };
+    await setUserState(sourceId, expiredState);
+    
+    const retrievedState = await getUserState(sourceId);
     expect(retrievedState).toBeUndefined();
   });
 });

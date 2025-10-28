@@ -129,57 +129,59 @@ export async function overlayTextOnImage(imageBuffer: Buffer, text: string): Pro
     lines.push({ elements: currentLineElements, width: currentLineWidth });
   }
 
-  const lineHeight = fontSize * 1.2; // 1.2 times font size for line height
+  if (lines.length > 0) {
+    const lineHeight = fontSize * 1.2; // 1.2 times font size for line height
 
-  // Position text at the bottom center
-  const x = canvas.width / 2;
+    // Position text at the bottom center
+    const x = canvas.width / 2;
 
-  let maxContentWidth = 0;
-  for (const line of lines) {
-    if (line.width > maxContentWidth) {
-      maxContentWidth = line.width;
+    let maxContentWidth = 0;
+    for (const line of lines) {
+      if (line.width > maxContentWidth) {
+        maxContentWidth = line.width;
+      }
     }
-  }
 
-  const padding = fontSize / 4;
-  const bgWidth = maxContentWidth + (padding * 2);
-  const bgHeight = (lines.length * lineHeight) + (padding * 2);
+    const padding = fontSize / 4;
+    const bgWidth = maxContentWidth + (padding * 2);
+    const bgHeight = (lines.length * lineHeight) + (padding * 2);
 
-  const bgX = x - (bgWidth / 2);
-  const bgY = canvas.height - (fontSize * 1.5) - bgHeight; // Position background from bottom with margin
+    const bgX = x - (bgWidth / 2);
+    const bgY = canvas.height - (fontSize * 1.5) - bgHeight; // Position background from bottom with margin
 
-  ctx.fillStyle = config.image.bgColorRgba; // Use background color from config
-  ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+    ctx.fillStyle = config.image.bgColorRgba; // Use background color from config
+    ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
 
-  // --- Text Styling (after background) ---
-  ctx.fillStyle = config.image.textColorHex; // Use text color from config
+    // --- Text Styling (after background) ---
+    ctx.fillStyle = config.image.textColorHex; // Use text color from config
 
-  // Render each line and overlay emojis
-  const startY = bgY + padding + lineHeight / 2; // Start Y for the middle of the first line
+    // Render each line and overlay emojis
+    const startY = bgY + padding + lineHeight / 2; // Start Y for the middle of the first line
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const currentY = startY + i * lineHeight;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const currentY = startY + i * lineHeight;
 
-    let currentLineX = x - line.width / 2; // Start X for the current line, based on its calculated width
+      let currentLineX = x - line.width / 2; // Start X for the current line, based on its calculated width
 
-    for (const element of line.elements) {
-      if (element.type === 'text') {
-        ctx.fillText(element.value, currentLineX, currentY);
-        currentLineX += ctx.measureText(element.value).width;
-      } else { // type === 'emoji'
-        const emojiUrl = `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${element.value.toLowerCase()}.png`;
-        console.log(`Attempting to load emoji from: ${emojiUrl}`);
-        try {
-          const emojiImage = await loadImage(emojiUrl);
-          console.log(`Successfully loaded emoji image for ${element.value}`);
-          ctx.drawImage(emojiImage, currentLineX, currentY - emojiSize / 2, emojiSize, emojiSize); // Adjust y for middle baseline
-        } catch (error: any) {
-          console.error(`Failed to load emoji image ${element.value} from ${emojiUrl}:`, error.message);
-          // Fallback to text if image fails to load
-          ctx.fillText('□', currentLineX, currentY);
+      for (const element of line.elements) {
+        if (element.type === 'text') {
+          ctx.fillText(element.value, currentLineX, currentY);
+          currentLineX += ctx.measureText(element.value).width;
+        } else { // type === 'emoji'
+          const emojiUrl = `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${element.value.toLowerCase()}.png`;
+          console.log(`Attempting to load emoji from: ${emojiUrl}`);
+          try {
+            const emojiImage = await loadImage(emojiUrl);
+            console.log(`Successfully loaded emoji image for ${element.value}`);
+            ctx.drawImage(emojiImage, currentLineX, currentY - emojiSize / 2, emojiSize, emojiSize); // Adjust y for middle baseline
+          } catch (error: any) {
+            console.error(`Failed to load emoji image ${element.value} from ${emojiUrl}:`, error.message);
+            // Fallback to text if image fails to load
+            ctx.fillText('□', currentLineX, currentY);
+          }
+          currentLineX += emojiSize;
         }
-        currentLineX += emojiSize;
       }
     }
   }
