@@ -6,7 +6,10 @@ import { Theme, Style } from '../src/types';
 import { generateImage } from '../src/ai';
 import { setUserState, getUserState, clearUserState } from '../src/state';
 import { WebhookEvent } from '@line/bot-sdk';
-import { uploadImage, deleteImage } from '../src/cloudinary';
+import { uploadImage, deleteImage, configureCloudinary } from '../src/cloudinary';
+
+// Configure Cloudinary
+configureCloudinary();
 import { config } from '../src/config';
 
 // --- 1. Load Data ---

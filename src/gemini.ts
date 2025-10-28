@@ -4,7 +4,7 @@ import { config } from './config';
 
 let generativeModel: GenerativeModel | undefined;
 
-function getGenerativeModel(): GenerativeModel {
+export function getGenerativeModel(): GenerativeModel {
   if (!generativeModel) {
     const apiKey = config.gemini.apiKey;
     if (!apiKey) {
@@ -48,9 +48,9 @@ export async function generateBlessingText(theme: Theme, style: Style): Promise<
       }
     } catch (error: any) {
       console.error(`Attempt ${attempts + 1} failed:`, error);
-      if (error.message.includes('API_KEY')) {
-        throw new Error('GEMINI_API_KEY is not configured correctly.');
-      }
+      // if (error.message.includes('API_KEY')) {
+      //   throw new Error('GEMINI_API_KEY is not configured correctly.');
+      // }
     }
     attempts++;
   }

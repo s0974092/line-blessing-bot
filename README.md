@@ -1,238 +1,163 @@
-🪷 LINE AI 長輩圖生成系統規格書
+# 💖 祝福寶 (Blessing Buddy) - LINE AI 祝福圖生成器
 
-版本： v1.0
-建立日期： 2025-10-20
-專案名稱： 「LINE AI 長輩圖生成器」
-產品類型： LINE Chatbot + AI 圖像生成服務
-主要目的：
-讓使用者可透過 LINE Bot，選擇主題與風格，快速生成一張可愛、有祝福語的長輩圖，並能一鍵分享給好友或群組。
+[![授權條款](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-blue.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black.svg)](https://vercel.com/)
+[![Test Coverage](https://img.shields.io/badge/coverage-91.55%25-brightgreen)](./coverage/lcov-report/index.html)
 
-🧭 一、系統目標 (System Objective)
+你的專屬祝福小幫手！「祝福寶」是一個 LINE 聊天機器人，它化身為一個拿著愛心的福寶，用 AI 為你快速生成並分享帶有溫暖祝福的精美圖片。
 
-提供使用者簡單的三步驟互動：
-選主題 → 選風格 → 輸入祝福文字 → 生成圖片
+![概念動圖](./concept-video.gif)
 
-自動生成風格化長輩圖，並加上使用者或預設的祝福語。
+![chatbot](./chatbot.jpeg)
 
-可在 LINE 中直接預覽並分享圖片。
+![helloworld](./helloworld.png)
 
-圖片生成過程自動化，使用者無需理解 AI prompt。
+## 👋 介紹
 
-🌈 二、使用者互動流程 (User Flow)
-Step 1. 選擇主題
+在日常的數位溝通中，一張溫暖的問候圖能瞬間拉近彼此的距離。「祝福寶 (Blessing Buddy)」的誕生，正是為了讓這份心意的傳遞變得更加輕鬆、個人化。它就像一個微笑的小圖雲，隨時準備好為你服務。使用者只需透過簡單的點選，選擇主題與風格，並可附上自訂的祝福語，AI 就會為您生成一張充滿溫情的客製化圖片，讓您輕鬆地將溫暖與祝福分享給生命中每一位重要的人。
 
-「請選擇今天想傳的祝福主題 🌸」
-選項：
+## ✨ 功能亮點
 
-🌅 早安問候
+- **主題式生成**：內建多種祝福主題，如 `早安`、`生日快樂`、`健康平安` 等。
+- **風格客製化**：支援 `柔光寫實`、`東方水墨`、`插畫風` 等多樣化的藝術風格。
+- **自訂或 AI 祝福語**：除了可輸入自己的祝福文字，也可選擇由 AI (Google Gemini) 生成。
+- **雙 AI 引擎**：整合 **Pollinations.ai** 進行藝術圖片生成，並採用 **Google Gemini** 產生富有創意的祝福文案。
+- **即時分享**：在 LINE 中生成後，可一鍵將圖片轉傳給好友或群組。
+- **輕量化設計**：圖片生成後即時傳送，伺服器不保留，尊重隱私且節省資源。
 
-🌙 晚安祝福
+## ⚙️ 技術架構
 
-🎂 生日快樂
+本專案採用 Serverless 架構，部署於 Vercel 平台，並整合多個雲端服務來實現其功能。
 
-🌻 健康平安
+![系統架構圖](./line-blessing-bot-system-architecture.png)
 
-❤️ 節慶祝福
+- **平台**：LINE Messaging Platform
+- **後端**：Node.js / TypeScript
+- **部署**：Vercel Serverless Functions
+- **AI 圖像生成**：Pollinations.ai
+- **AI 文字生成**：Google Gemini API
+- **圖片處理**：`@napi-rs/canvas` (高效能的 Node.js 畫布工具)
+- **圖片儲存**：Cloudinary (用於暫存圖片並產生公開 URL)
 
-💪 鼓勵打氣
+## 🚀 快速開始
 
-Step 2. 選擇風格
+請依照以下步驟在您的本機環境中設定並執行此專案。
 
-「想要哪一種風格的長輩圖？」
-選項（Carousel 或 Quick Reply）：
+### 1. 環境準備
 
-🌸 柔光寫實風
+請先確認您的開發環境已安裝 [Node.js](https://nodejs.org/) (建議版本 `v20.x` 或以上) 與 `npm`。
 
-🎨 插畫風
+### 2. 複製專案
 
-🪷 東方水墨風
+```bash
+git clone https://github.com/your-username/line-blessing-bot.git
+cd line-blessing-bot
+```
 
-🌈 夢幻糖果風
+### 3. 安裝依賴
 
-🕊️ 佛系禪風
+```bash
+npm install
+```
 
-💖 懷舊復古風
+### 4. 設定環境變數
 
-Step 3. 輸入祝福文字
+複製 `.env.example` 檔案為 `.env`，並填入您自己的 API 金鑰與設定。
 
-「要加上祝福語嗎？（可略過）」
-範例：「祝你平安喜樂、天天開心 🌻」
+```bash
+cp .env.example .env
+```
 
-Step 4. 圖片生成與回傳
+接著，編輯 `.env` 檔案：
 
-Bot 回傳圖片 + 分享按鈕：
+```ini
+# .env
 
-「✅ 生成完成！
-點我傳送這張祝福圖給好友 💌」
+# LINE Bot
+LINE_CHANNEL_ACCESS_TOKEN="YOUR_LINE_CHANNEL_ACCESS_TOKEN"
+LINE_CHANNEL_SECRET="YOUR_LINE_CHANNEL_SECRET"
 
-🧩 三、系統架構 (System Architecture)
-LINE User
-   ↓
-LINE Messaging API
-   ↓
-LINE Bot Server (Node.js)
-   ├─ 主題選擇模組 (Theme Selector)
-   ├─ 風格選擇模組 (Style Selector)
-   ├─ 文字輸入模組 (Text Input Handler)
-   ├─ Prompt 組合模組 (Prompt Composer)
-   ├─ AI 圖像生成模組 (Image Generator)
-   ├─ 圖片疊字模組 (Text Overlay)
-   ├─ 圖片儲存模組 (Cloudinary)
-   └─ 回傳模組 (LINE Reply/Push)
+# Google Gemini API
+GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+GEMINI_MODEL="gemini-2.5-flash" # 可選，若未設定則使用預設模型
 
-⚙️ 四、技術規格 (Technical Specification)
-模組名稱	功能說明	技術 / API
-LINE Bot API	接收與回覆使用者訊息	@line/bot-sdk
-圖片生成 (AI)	根據主題與風格生成圖片	OpenAI DALL·E 3 / Replicate / Flux
-圖片疊字	將祝福文字疊加在生成圖上	node-canvas / Cloudinary Text Overlay
-儲存與 CDN	儲存圖片並生成公開連結	Cloudinary / Supabase Storage
-Config 管理	管理主題與風格資料	JSON (themes.json, styles.json)
-部署	運行 Bot 伺服器	Vercel / Render / Railway
-資料快取	暫存使用者流程狀態	Redis / In-memory cache
-🧱 五、資料結構 (Data Structure)
-(1) themes.json
-{
-  "themes": [
-    {
-      "id": "good_morning",
-      "name": "早安問候",
-      "defaultText": "早安～祝你開心每一天 ☀️",
-      "prompt": "morning sunlight, coffee, cozy room, {stylePrompt}"
-    },
-    {
-      "id": "good_night",
-      "name": "晚安祝福",
-      "defaultText": "晚安好夢 🌙",
-      "prompt": "night sky, stars, moonlight, warm light, {stylePrompt}"
-    },
-    {
-      "id": "birthday",
-      "name": "生日快樂",
-      "defaultText": "生日快樂 🎂",
-      "prompt": "colorful cake, balloons, candles, {stylePrompt}"
-    },
-    {
-      "id": "health",
-      "name": "健康平安",
-      "defaultText": "祝你健康平安 🌻",
-      "prompt": "sunny meadow, flowers, nature, {stylePrompt}"
-    }
-  ]
-}
+# Cloudinary
+CLOUDINARY_CLOUD_NAME="YOUR_CLOUDINARY_CLOUD_NAME"
+CLOUDINARY_API_KEY="YOUR_CLOUDINARY_API_KEY"
+CLOUDINARY_API_SECRET="YOUR_CLOUDINARY_API_SECRET"
 
-(2) styles.json
-{
-  "styles": [
-    {
-      "id": "soft_realism",
-      "name": "柔光寫實風",
-      "prompt": "soft lighting, cinematic realism, warm tone, cozy atmosphere"
-    },
-    {
-      "id": "illustration",
-      "name": "插畫風",
-      "prompt": "cute digital illustration, pastel tone, kawaii style"
-    },
-    {
-      "id": "ink_painting",
-      "name": "東方水墨風",
-      "prompt": "Chinese ink painting, watercolor, minimal brush strokes"
-    },
-    {
-      "id": "zen_style",
-      "name": "佛系禪風",
-      "prompt": "Buddhist Zen style, lotus, sunlight, misty calm"
-    },
-    {
-      "id": "dreamy",
-      "name": "夢幻糖果風",
-      "prompt": "dreamy pastel colors, floating hearts and clouds, soft focus"
-    },
-    {
-      "id": "vintage",
-      "name": "懷舊復古風",
-      "prompt": "vintage film photo, nostalgic warm color, soft grain"
-    }
-  ]
-}
+# Redis (for State Management)
+REDIS_URL="redis://..."
+```
 
-🧠 六、AI Prompt 組合邏輯 (Prompt Composition Logic)
-// Example pseudo-code
-const themePrompt = selectedTheme.prompt;
-const stylePrompt = selectedStyle.prompt;
+### 5. 啟動本地開發伺服器
 
-const finalPrompt = themePrompt.replace("{stylePrompt}", stylePrompt);
+```bash
+npm run dev
+```
 
+### 6. 設定 Webhook
 
-例子：
+為了讓 LINE 平台能將訊息轉發到您的本地開發伺服器，您需要一個公開的 HTTPS 網址。推薦使用 `ngrok` 來建立通道。
 
-主題：「早安問候」
+```bash
+ngrok http 3000
+```
 
-風格：「插畫風」
-→ 最終 Prompt：
+啟動 `ngrok` 後，將取得的 `https-` 開頭的網址（例如 `https://xxxx-xxxx.ngrok-free.app`）填入 LINE Developer 後台的 Webhook URL 欄位，並在網址後方加上 `/api/index`。
 
-morning sunlight, coffee, cozy room, cute digital illustration, pastel tone, kawaii style
+範例：`https://xxxx-xxxx.ngrok-free.app/api/index`
 
-🖼️ 七、圖片文字疊加邏輯 (Text Overlay Spec)
+現在，您可以開始在 LINE 上與您的機器人互動了！
 
-使用 node-canvas 或 Cloudinary API 疊加
+## 📝 環境變數
 
-字型建議：Noto Sans TC / 思源黑體
+| 變數名稱                    | 說明                                                     | 必填 |
+| --------------------------- | -------------------------------------------------------- | :--: |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Messaging API 的 Channel Access Token               |  是  |
+| `LINE_CHANNEL_SECRET`       | LINE Messaging API 的 Channel Secret                     |  是  |
+| `GEMINI_API_KEY`            | Google Gemini API 金鑰 (用於 AI 文字生成)                |  是  |
+| `GEMINI_MODEL`              | Google Gemini 的文字模型 (例如 `gemini-2.5-pro`)         |  否  |
+| `CLOUDINARY_CLOUD_NAME`     | Cloudinary 的 Cloud Name                                 |  是  |
+| `CLOUDINARY_API_KEY`        | Cloudinary 的 API Key                                    |  是  |
+| `CLOUDINARY_API_SECRET`     | Cloudinary 的 API Secret                                 |  是  |
+| `REDIS_URL`                 | Redis 資料庫的連線網址 (用於狀態管理)                  |  是  |
 
-顏色建議：#FFAA33（早安） / #334477（晚安） / #E65A41（節慶）
+## 📂 專案結構
 
-位置：圖片底部中間對齊
+```
+.
+├── api/              # Vercel Serverless Function 主要進入點
+├── assets/           # 靜態資源，如自訂字型
+├── src/              # 專案核心原始碼
+│   ├── ai.ts         # AI Prompt 組合邏輯
+│   ├── cloudinary.ts # Cloudinary 整合
+│   ├── config.ts     # 環境變數與設定檔
+│   ├── gemini.ts     # Google Gemini API 整合
+│   ├── image.ts      # 圖片處理 (文字疊加)
+│   ├── state.ts      # 使用者狀態管理
+│   └── types.ts      # TypeScript 型別定義
+├── tests/            # Jest 測試檔案
+├── themes.json       # 主題設定檔
+├── styles.json       # 風格設定檔
+├── package.json      # 專案依賴與腳本
+└── tsconfig.json     # TypeScript 編譯器設定
+```
 
-📡 八、API 規格 (Backend Endpoints)
-Method	Endpoint	說明
-POST	/webhook	LINE webhook 接收使用者訊息
-GET	/themes	回傳可選主題清單
-GET	/styles	回傳風格清單
-POST	/generate	接收主題、風格、祝福文字，生成圖片並回傳 URL
-/generate 輸入範例
-{
-  "themeId": "good_morning",
-  "styleId": "illustration",
-  "text": "祝你今天元氣滿滿 ☀️"
-}
+## 🤝 如何貢獻
 
-回傳範例
-{
-  "imageUrl": "https://res.cloudinary.com/xxx/generated/abc123.png"
-}
+歡迎您為這個專案做出貢獻！您可以透過以下方式參與：
 
-🪄 九、系統流程圖 (System Flow)
-[使用者] → [選主題]
-          ↓
-       [選風格]
-          ↓
-      [輸入文字]
-          ↓
-   [Bot 組合 Prompt]
-          ↓
-   [AI 生成圖片 API]
-          ↓
-   [文字疊加處理]
-          ↓
-   [Cloudinary 儲存]
-          ↓
-   [LINE 回傳圖片 + 分享按鈕]
+1.  **Fork** 此專案。
+2.  建立您的功能分支 (`git checkout -b feature/AmazingFeature`)。
+3.  提交您的變更 (`git commit -m 'Add some AmazingFeature'`)。
+4.  將您的分支推送到遠端 (`git push origin feature/AmazingFeature`)。
+5.  開啟一個 **Pull Request**。
 
-📅 十、開發時程建議 (Development Phases)
-階段	任務	預估時間
-Phase 1	建立 LINE Bot + 選單互動	2 週
-Phase 2	整合 AI 圖片生成 API	1 週
-Phase 3	圖片疊字與上傳 CDN	1 週
-Phase 4	分享與排版優化	1 週
-合計	MVP 可上線時間	約 5 週
-🔮 十一、未來擴充方向 (Future Enhancements)
+也歡迎您開啟 **Issue** 來回報問題或提出功能建議。
 
-✨ 增加「每日自動祝福推播」功能
+## 📄 授權條款
 
-🪷 支援「語音祝福」(TTS)
-
-📆 加入節慶主題自動上架（母親節、中秋節）
-
-🖋️ 支援使用者自訂模板、上傳照片背景
-
-💾 紀錄使用者常用主題偏好
+本專案採用 [MIT](./LICENSE) 授權條款。

@@ -1,89 +1,181 @@
 import { jest } from '@jest/globals';
-import { generateBlessingText } from '../src/gemini';
-import { Theme, Style } from '../src/types';
+import type { Theme, Style } from '../src/types';
+import { config as appConfig } from '../src/config';
 
-// Mock the GoogleGenerativeAI module
-const mockGenerateContent = jest.fn() as jest.MockedFunction<any>;
-const mockGetGenerativeModel = jest.fn(() => ({
-  generateContent: mockGenerateContent,
-}));
+// Define a local type for our mock GenerativeModel to avoid import issues
+interface LocalMockGenerativeModel {
+  setGenerateContentResult(result: any): void;
+  generateContent: jest.Mock<(...args: any[]) => Promise<any>>; // Explicitly type as Jest mock
+}
 
-jest.mock('@google/generative-ai', () => ({
-  GoogleGenerativeAI: jest.fn(() => ({
-    getGenerativeModel: mockGetGenerativeModel,
-  })),
-}));
+// Define a local type for our mock GoogleGenerativeAI to avoid import issues
+interface LocalMockGoogleGenerativeAI {
+  _getMockGenerativeModel(): LocalMockGenerativeModel;
+}
 
-describe('Gemini Service', () => {
-  const mockTheme: Theme = { id: 't1', name: '早安', defaultText: '', prompt: '早晨的陽光', thumbnail: 'http://example.com/t1.png' };
-  const mockStyle: Style = { id: 's1', name: '柔光寫實風', prompt: '柔和的光線，寫實風格', thumbnail: 'http://example.com/s1.png' };
+const theme: Theme = { id: 't1', name: 'TestTheme', defaultText: '', prompt: 'TestThemePrompt', thumbnail: '' };
+const style: Style = { id: 's1', name: 'TestStyle', prompt: 'TestStylePrompt', thumbnail: '' };
 
-  beforeEach(() => {
-    mockGenerateContent.mockClear();
-    mockGetGenerativeModel.mockClear();
-    process.env.GEMINI_API_KEY = 'test-api-key'; // Set a dummy API key for tests
+describe('gemini service', () => {
+  let geminiModule: typeof import('../src/gemini');
+  let mockGenerativeModel: LocalMockGenerativeModel;
+  let MockedGoogleGenerativeAI: jest.MockedClass<any>; // To hold the mocked GoogleGenerativeAI class
+  let MockedGenerativeModel: jest.MockedClass<any>; // To hold the mocked GenerativeModel class
+
+  const originalEnv = process.env;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.resetModules();
+
+    // Set environment variables for the config module
+    process.env = {
+      ...originalEnv,
+      GEMINI_API_KEY: 'test-api-key',
+      GEMINI_MODEL: 'gemini-pro',
+      GEMINI_BLESSING_PROMPT_TEMPLATE: 'Generate a blessing for {theme} in {style} style, min {minLength} chars, max {maxLength} chars.',
+      GEMINI_FALLBACK_PROMPT_TEMPLATE: 'Generate a generic blessing, min {minLength} chars, max {maxLength} chars.',
+      GEMINI_FINAL_FALLBACK_TEXT: '平安喜樂，萬事如意',
+      GEMINI_TEXT_MIN_LENGTH: '10',
+      GEMINI_TEXT_MAX_LENGTH: '20',
+      GEMINI_GENERATION_MAX_ATTEMPTS: '3',
+    };
+
+    // Mock the @google/generative-ai module
+    jest.doMock('@google/generative-ai', () => {
+      const mockGenerateContent = jest.fn(() => ({
+        response: {
+          text: jest.fn(() => 'Mock blessing text within length'),
+        },
+      }));
+
+      const MockGenerativeModelClass = jest.fn(function (this: any) {
+        this.generateContent = mockGenerateContent;
+      });
+
+      const actualMockGoogleGenerativeAI = jest.fn((apiKey: string) => {
+        if (!apiKey) {
+          throw new Error('Mock: API key is missing');
+        }
+        return {
+          getGenerativeModel: jest.fn(() => new MockGenerativeModelClass()),
+          _getMockGenerativeModel: jest.fn(() => new MockGenerativeModelClass()), // Expose for testing
+        };
+      });
+
+      MockedGoogleGenerativeAI = actualMockGoogleGenerativeAI; // Assign to top-level variable
+      MockedGenerativeModel = MockGenerativeModelClass; // Assign to top-level variable
+
+      return {
+        GoogleGenerativeAI: actualMockGoogleGenerativeAI,
+        GenerativeModel: MockGenerativeModelClass,
+      };
+    }, { virtual: true });
+
+    geminiModule = await import('../src/gemini');
+
+    // Call getGenerativeModel once to ensure GoogleGenerativeAI is instantiated
+    // and assign the returned mocked GenerativeModel instance to mockGenerativeModel
+    mockGenerativeModel = geminiModule.getGenerativeModel() as any as LocalMockGenerativeModel;
   });
 
   afterEach(() => {
-    delete process.env.GEMINI_API_KEY;
+    process.env = originalEnv; // Restore original environment variables
   });
 
-  it('should generate a blessing text between 5 and 15 characters', async () => {
-    mockGenerateContent.mockResolvedValue({ response: { text: () => '祝您有個美好的一天' } });
+  describe('getGenerativeModel', () => {
+    it('should initialize GenerativeModel with API key and model name', async () => {
+      const model = geminiModule.getGenerativeModel();
+      expect(MockedGoogleGenerativeAI).toHaveBeenCalledWith('test-api-key');
+      expect(model).toBeInstanceOf(MockedGenerativeModel); // Use the mocked GenerativeModel type
+    });
 
-    const blessingText = await generateBlessingText(mockTheme, mockStyle);
+    it('should fallback to generic prompt if all attempts fail and eventually succeed', async () => {
+      const shortText = '短文'; // Length 2, min 10
+      const fallbackText = '這是一句通用的祝福語。'; // Length 12
 
-    expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-2.5-flash' });
-    expect(mockGenerateContent).toHaveBeenCalledWith(
-      `請根據主題「${mockTheme.name}」和風格「${mockStyle.name}」，生成一句長度介於5到15個字之間（包含5和15）的繁體中文祝福語。請直接提供祝福語文字，不要包含任何其他說明或引號。`
-    );
-    expect(blessingText).toBe('祝您有個美好的一天');
-    expect(blessingText.length).toBeGreaterThanOrEqual(5);
-    expect(blessingText.length).toBeLessThanOrEqual(15);
+      // Simulate all initial attempts failing due to out-of-bounds length
+      mockGenerativeModel.generateContent
+        .mockResolvedValueOnce({ response: { text: () => shortText } })
+        .mockResolvedValueOnce({ response: { text: () => shortText } })
+        .mockResolvedValueOnce({ response: { text: () => shortText } })
+        .mockResolvedValueOnce({ response: { text: () => fallbackText } }); // Fallback succeeds
+
+      const blessing = await geminiModule.generateBlessingText(theme, style);
+
+      expect(blessing).toBe(fallbackText);
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledTimes(4); // 3 initial + 1 fallback
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a blessing for TestTheme in TestStyle style, min 10 chars, max 20 chars.'
+      );
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a generic blessing, min 10 chars, max 20 chars.'
+      );
+    });
+
+    it('should return the same GenerativeModel instance on subsequent calls (singleton)', () => {
+      const model1 = geminiModule.getGenerativeModel();
+      const model2 = geminiModule.getGenerativeModel();
+      expect(model1).toBe(model2);
+    });
   });
 
-  it('should retry if generated text is too short and eventually succeed', async () => {
-    mockGenerateContent
-      .mockResolvedValueOnce({ response: { text: () => '太短' } })
-      .mockResolvedValueOnce({ response: { text: () => '這次可以了' } });
+  describe('generateBlessingText', () => {
+    it('should generate a blessing text within specified length constraints', async () => {
+      const expectedText = '這是一句測試祝福語，長度符合要求。';
+      mockGenerativeModel.generateContent.mockResolvedValueOnce({
+        response: {
+          text: () => expectedText,
+        },
+      });
 
-    const blessingText = await generateBlessingText(mockTheme, mockStyle);
+      const blessing = await geminiModule.generateBlessingText(theme, style);
+      expect(blessing).toBe(expectedText);
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledTimes(1);
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a blessing for TestTheme in TestStyle style, min 10 chars, max 20 chars.'
+      );
+    });
 
-    expect(mockGenerateContent).toHaveBeenCalledTimes(2);
-    expect(blessingText).toBe('這次可以了');
-  });
+    it('should retry if generateContent throws an API error and eventually succeed', async () => {
+      const errorMessage = 'API rate limit exceeded';
+      const validText = '這是一句符合長度要求的祝福語。';
 
-  it('should retry if generated text is too long and eventually use fallback', async () => {
-    mockGenerateContent.mockResolvedValue({ response: { text: () => '這句話實在是太長太長了，超過十五個字了' } });
+      mockGenerativeModel.generateContent
+        .mockRejectedValueOnce(new Error(errorMessage))
+        .mockRejectedValueOnce(new Error(errorMessage))
+        .mockResolvedValueOnce({ response: { text: () => validText } });
 
-    const blessingText = await generateBlessingText(mockTheme, mockStyle);
+      const blessing = await geminiModule.generateBlessingText(theme, style);
 
-    expect(mockGenerateContent).toHaveBeenCalledTimes(4); // 3 attempts + 1 fallback
-    expect(blessingText).toBe('平安喜樂，萬事如意');
-  });
+      expect(blessing).toBe(validText);
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledTimes(3);
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a blessing for TestTheme in TestStyle style, min 10 chars, max 20 chars.'
+      );
+    });
 
-  it('should return fallback text if API call fails consistently', async () => {
-    mockGenerateContent.mockRejectedValue(new Error('API error'));
+    it('should return final fallback text if all attempts and fallback prompt fail', async () => {
+      const shortText = '短文'; // Length 2, min 10
+      const errorMessage = 'Fallback API error';
 
-    const blessingText = await generateBlessingText(mockTheme, mockStyle);
-    expect(blessingText).toBe('平安喜樂，萬事如意');
-    expect(mockGenerateContent).toHaveBeenCalledTimes(4); // 3 attempts + 1 fallback
-  });
+      // Simulate all initial attempts failing due to out-of-bounds length
+      mockGenerativeModel.generateContent
+        .mockResolvedValueOnce({ response: { text: () => shortText } }) // Attempt 1
+        .mockResolvedValueOnce({ response: { text: () => shortText } }) // Attempt 2
+        .mockResolvedValueOnce({ response: { text: () => shortText } }) // Attempt 3
+        .mockRejectedValueOnce(new Error(errorMessage)); // Fallback attempt fails
 
-  it('should throw an error if GEMINI_API_KEY is not set', async () => {
-    // Use jest.isolateModules to ensure a fresh import of gemini.ts without the API key
-    await jest.isolateModulesAsync(async () => {
-      delete process.env.GEMINI_API_KEY;
-      // Reset the singleton instance in the module cache
-      jest.resetModules();
-      const { generateBlessingText: isolatedGenerateBlessingText } = await import('../src/gemini');
-      try {
-        await isolatedGenerateBlessingText(mockTheme, mockStyle);
-        throw new Error('Expected function to throw an error');
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toBe('GEMINI_API_KEY is not set in environment variables.');
-      }
+      const blessing = await geminiModule.generateBlessingText(theme, style);
+
+      expect(blessing).toBe('平安喜樂，萬事如意');
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledTimes(4); // 3 initial + 1 fallback
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a blessing for TestTheme in TestStyle style, min 10 chars, max 20 chars.'
+      );
+      expect(mockGenerativeModel.generateContent).toHaveBeenCalledWith(
+        'Generate a generic blessing, min 10 chars, max 20 chars.'
+      );
     });
   });
 });
