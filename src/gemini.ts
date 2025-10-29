@@ -45,6 +45,10 @@ export async function generateBlessingText(theme: Theme, style: Style): Promise<
       }
     } catch (error: any) {
       console.error(`Attempt ${attempts + 1} failed:`, error);
+      // Check for quota exceeded error
+      if (error.message && error.message.includes('RESOURCE_EXHAUSTED')) {
+        throw new Error('GEMINI_QUOTA_EXCEEDED'); // Custom error to be caught by webhook handler
+      }
       // if (error.message.includes('API_KEY')) {
       //   throw new Error('GEMINI_API_KEY is not configured correctly.');
       // }

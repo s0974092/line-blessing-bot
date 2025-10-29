@@ -28,6 +28,14 @@ const lineConfig: line.MiddlewareConfig & line.ClientConfig = {
 const client = new line.Client(lineConfig);
 const app = express();
 
+app.get('/api/themes', (req: Request, res: Response) => {
+  res.json(themes);
+});
+
+app.get('/api/styles', (req: Request, res: Response) => {
+  res.json(styles);
+});
+
 // --- 3. Webhook Handler ---
 app.post('/api/webhook', line.middleware(lineConfig), async (req: Request, res: Response) => {
   console.log('Webhook received!');
@@ -110,22 +118,10 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
     // User is in the middle of a conversation - this message is the blessing text
     let { theme, style } = userState;
     let styleInfo: string; // Declare styleInfo here
-    let text = userText;
 
-    if (text === '用主題預設文字') {
-      text = theme.defaultText;
-    } else if (text === '請 AI 生成祝福語') {
-      text = ''; // Pass an empty string to signal AI generation in generateImage
-    }
-
-    // --- Text length validation ---
-    console.log(`Validating text: "${text}" (length: ${text.length}), MAX_TEXT_LENGTH: ${config.bot.maxTextLength}`);
-    if (text.length > config.bot.maxTextLength) {
-      return client.replyMessage(event.replyToken, { type: 'text', text: `祝福語長度超過 ${config.bot.maxTextLength} 字，請重新輸入。` });
-    }
-
-    if (Object.keys(style).length === 0) {
-      style = styles[0];
+    // If style is not yet selected, use the first available style as default
+    if (!style || Object.keys(style).length === 0) {
+      style = styles[0]; // Assuming styles array is never empty
       styleInfo = `（預設風格：${style.name}）`;
     } else {
       styleInfo = `（風格：${style.name}）`;
@@ -141,6 +137,12 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
     await client.replyMessage(event.replyToken, {
       type: 'text',
       text: replyText,
+    });
+
+    // Add an immediate processing message
+    await client.pushMessage(sourceId, {
+      type: 'text',
+      text: '正在處理中，請稍候...',
     });
 
     let cloudinaryPublicId: string | undefined;
@@ -164,9 +166,13 @@ async function handleTextMessage(event: line.MessageEvent, sourceId: string) {
 
     } catch (error: any) {
       console.error('Error in image generation or upload process:', error);
+      let errorMessage = config.bot.generationErrorMessage;
+      if (error.message === 'GEMINI_QUOTA_EXCEEDED') {
+        errorMessage = '今日免費額度已用完，請明天再試喔！';
+      }
       await client.pushMessage(sourceId, {
         type: 'text',
-        text: config.bot.generationErrorMessage, // Use centralized error message
+        text: errorMessage,
       });
     }
 
@@ -198,8 +204,11 @@ async function handlePostback(event: line.PostbackEvent, sourceId: string) {
   const theme = themes.find((t: Theme) => t.id === themeId);
   const style = styles.find((s: Style) => s.id === styleId);
 
-  if (!theme || !style) {
-    return client.replyMessage(event.replyToken, { type: 'text', text: '抱歉，找不到對應的主題或風格。' });
+  if (!theme) {
+    return client.replyMessage(event.replyToken, { type: 'text', text: '抱歉，找不到對應的主題。請重新選擇。' });
+  }
+  if (!style) {
+    return client.replyMessage(event.replyToken, { type: 'text', text: '抱歉，找不到對應的風格。請重新選擇。' });
   }
 
   await setUserState(sourceId, { theme, style, timestamp: Date.now() });
@@ -254,6 +263,7 @@ function replyTextPrompt(replyToken: string, defaultText: string) {
       items: [
         { type: 'action', action: { type: 'message', label: '用主題預設文字', text: '用主題預設文字' } },
         { type: 'action', action: { type: 'message', label: '請 AI 生成祝福語', text: '請 AI 生成祝福語' } },
+        { type: 'action', action: { type: 'message', label: '重新開始', text: config.bot.triggerKeywords[0] } }, // Add Restart option
       ],
     },
   };

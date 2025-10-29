@@ -1,6 +1,8 @@
 import { Theme, Style } from './types';
 import { overlayTextOnImage } from './image';
 import { generateBlessingText } from './gemini';
+import { visionService } from './vision'; // Import visionService
+import fetch from 'node-fetch'; // Ensure fetch is imported
 
 /**
  * Composes a prompt for image generation based on a theme and a style.
@@ -48,25 +50,23 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
     const model = 'flux'; // Using 'flux' as default as per example
     const nologo = true;
 
-    let originalImageBuffer: Buffer | undefined;
+    let imageUrl: string | undefined;
     const maxRetries = 3;
     const retryDelay = 5000; // 5 seconds
 
     for (let i = 0; i < maxRetries; i++) {
       try {
-        const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}`;
+        const currentImageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}`;
 
-        console.log(`Attempt ${i + 1}: Fetching image from Pollinations.ai:`, imageUrl);
+        console.log(`Attempt ${i + 1}: Fetching image from Pollinations.ai:`, currentImageUrl);
 
-        const response = await fetch(imageUrl);
+        const response = await fetch(currentImageUrl);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch image from Pollinations.ai: ${response.statusText}`);
         }
 
-        // Fix: Use .arrayBuffer() and Buffer.from() instead of .buffer(), which does not exist on Response
-        const arrayBuffer = await response.arrayBuffer();
-        originalImageBuffer = Buffer.from(arrayBuffer);
+        imageUrl = response.url; // Get the final URL after redirects
         break; // Success, break out of retry loop
       } catch (retryError: any) {
         console.error(`Attempt ${i + 1} failed:`, retryError.message);
@@ -79,12 +79,16 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
       }
     }
 
-    if (!originalImageBuffer) {
-      throw new Error('Failed to generate image after multiple retries.');
+    if (!imageUrl) {
+      throw new Error('Failed to generate image URL after multiple retries.');
     }
 
+    // --- NEW: Analyze image with Vision API ---
+    const objectAnnotations = await visionService.detectObjectLocalization(imageUrl);
+
     // Overlay the text on the image
-    const imageWithTextBuffer = await overlayTextOnImage(originalImageBuffer, blessingTextToOverlay);
+    // Pass imageUrl and objectAnnotations to overlayTextOnImage
+    const imageWithTextBuffer = await overlayTextOnImage(imageUrl, blessingTextToOverlay, objectAnnotations);
 
     return imageWithTextBuffer;
 
