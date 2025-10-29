@@ -19,7 +19,7 @@ jobs:
         node-version: '20' # Use the Node.js version appropriate for your project
 
     - name: Install dependencies
-      run: npm install
+      run: npm install --production
 
     - name: Run tests
       run: npm test
