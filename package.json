@@ -49,7 +49,5 @@
     "typescript": "^5.9.3"
   },
 
-  "optionalDependencies": {
-    "canvas": "^2.11.2"
-  }
+
 }
