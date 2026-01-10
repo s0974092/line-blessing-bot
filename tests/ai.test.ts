@@ -51,7 +51,11 @@ describe('ai service', () => {
     it('should generate an image with provided text', async () => {
       const fakeImageBuffer = Buffer.from('fake-image');
       const finalImageBuffer = Buffer.from('final-image');
-      mockFetch.mockResolvedValue({ ok: true, arrayBuffer: async () => fakeImageBuffer });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'image/png' },
+        arrayBuffer: async () => fakeImageBuffer
+      });
       mockOverlayTextOnImage.mockResolvedValue(finalImageBuffer);
 
       const result = await generateImage(theme, style, 'Provided Text');
@@ -66,7 +70,11 @@ describe('ai service', () => {
       const fakeImageBuffer = Buffer.from('fake-image');
       const finalImageBuffer = Buffer.from('final-image');
       mockGenerateBlessingText.mockResolvedValue('AI Text');
-      mockFetch.mockResolvedValue({ ok: true, arrayBuffer: async () => fakeImageBuffer });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'image/png' },
+        arrayBuffer: async () => fakeImageBuffer
+      });
       mockOverlayTextOnImage.mockResolvedValue(finalImageBuffer);
 
       const result = await generateImage(theme, style, '');
@@ -77,43 +85,51 @@ describe('ai service', () => {
     });
 
     it('should retry fetching the image on failure', async () => {
-        const fakeImageBuffer = Buffer.from('fake-image');
-        const finalImageBuffer = Buffer.from('final-image');
-        mockFetch
-            .mockResolvedValueOnce({ ok: false, statusText: 'Bad Gateway' })
-            .mockResolvedValueOnce({ ok: true, arrayBuffer: async () => fakeImageBuffer });
-        mockOverlayTextOnImage.mockResolvedValue(finalImageBuffer);
-
-        // Mock setTimeout to resolve immediately
-        jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
-            if (typeof callback === 'function') {
-                callback();
-            }
-            return {} as NodeJS.Timeout;
+      const fakeImageBuffer = Buffer.from('fake-image');
+      const finalImageBuffer = Buffer.from('final-image');
+      mockFetch
+        .mockResolvedValueOnce({ ok: false, statusText: 'Bad Gateway' })
+        .mockResolvedValueOnce({
+          ok: true,
+          headers: { get: () => 'image/png' },
+          arrayBuffer: async () => fakeImageBuffer
         });
+      mockOverlayTextOnImage.mockResolvedValue(finalImageBuffer);
 
-        const result = await generateImage(theme, style, 'Test');
+      // Mock setTimeout to resolve immediately
+      jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
+        if (typeof callback === 'function') {
+          callback();
+        }
+        return {} as NodeJS.Timeout;
+      });
 
-        expect(mockFetch).toHaveBeenCalledTimes(2);
-        expect(result).toBe(finalImageBuffer);
+      const result = await generateImage(theme, style, 'Test');
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result).toBe(finalImageBuffer);
     });
 
     it('should throw an error after all fetch retries fail', async () => {
-        mockFetch.mockResolvedValue({ ok: false, statusText: 'Server Error' });
-        jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
-            if (typeof callback === 'function') {
-                callback();
-            }
-            return {} as NodeJS.Timeout;
-        });
+      mockFetch.mockResolvedValue({ ok: false, statusText: 'Server Error' });
+      jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
+        if (typeof callback === 'function') {
+          callback();
+        }
+        return {} as NodeJS.Timeout;
+      });
 
-        await expect(generateImage(theme, style, 'Test')).rejects.toThrow('Failed to fetch image from Pollinations.ai: Server Error');
-        expect(mockFetch).toHaveBeenCalledTimes(3);
+      await expect(generateImage(theme, style, 'Test')).rejects.toThrow('Failed to fetch image from Pollinations.ai: Server Error');
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
     it('should throw a custom error if any step fails', async () => {
       const error = new Error('Overlay failed');
-      mockFetch.mockResolvedValue({ ok: true, arrayBuffer: async () => Buffer.from('fake') });
+      mockFetch.mockResolvedValue({
+        ok: true,
+        headers: { get: () => 'image/png' },
+        arrayBuffer: async () => Buffer.from('fake')
+      });
       mockOverlayTextOnImage.mockRejectedValue(error);
 
       await expect(generateImage(theme, style, 'Test')).rejects.toThrow('圖片生成失敗，請稍後再試。錯誤：Overlay failed');
