@@ -54,7 +54,8 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
 
     for (let i = 0; i < maxRetries; i++) {
       try {
-        const imageUrl = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}`;
+        // Use the correct image generation endpoint
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}`;
 
         console.log(`Attempt ${i + 1}: Fetching image from Pollinations.ai:`, imageUrl);
 
@@ -62,6 +63,15 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
 
         if (!response.ok) {
           throw new Error(`Failed to fetch image from Pollinations.ai: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.startsWith('image/')) {
+          console.error(`Invalid content type received: ${contentType}`);
+          // If we get an HTML response (likely an error page or the homepage), try to read the text for debugging
+          const text = await response.text();
+          console.error(`Response body (truncated): ${text.substring(0, 200)}...`);
+          throw new Error(`Received invalid content type: ${contentType}. Expected an image.`);
         }
 
         // Fix: Use .arrayBuffer() and Buffer.from() instead of .buffer(), which does not exist on Response
