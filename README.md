@@ -47,6 +47,36 @@ This project adopts a Serverless architecture, deployed on the Vercel platform, 
 - **Image Processing**: `@napi-rs/canvas` (High-performance Node.js canvas tool)
 - **Image Storage**: Cloudinary (for temporary image storage and public URL generation)
 
+## 🧠 Redis State Management
+
+This project uses Redis to temporarily store user conversation states to ensure a smooth user experience.
+
+### 1. When Data is Saved (Set)
+The system saves the temporary state when the user makes a selection:
+- **Theme Selection**: Records the `Theme` selected by the user.
+- **Style Selection**: Records the `Style` selected by the user.
+
+The system uses the user's `sourceId` (User ID) as the key to store the `UserState` object.
+
+### 2. When Data is Deleted (Delete)
+To allow for restart and prevent state confusion, data in Redis is deleted in the following scenarios:
+- **Flow Completion**: System automatically clears the state after the image is successfully generated and sent to the user.
+- **Manual Reset**: Old state is cleared if the user inputs trigger keywords (like "Start", "Generate Image") to restart the flow.
+- **Auto Expiration**: If the user is inactive for **5 minutes** (default `300` seconds) after a selection, Redis TTL (Time To Live) mechanism will automatically delete the data.
+
+
+
+## 🔒 Privacy and Data Security (Cloudinary Image Storage Policy)
+
+To protect your privacy and optimize resources, this service adopts an "Instant Generation, Instant Deletion" policy for image processing:
+
+1.  **Upload Timing**: Immediately after the AI generates the image and overlays the text, the system uploads the image to Cloudinary to obtain a public URL.
+2.  **Deletion Timing**: Once the image URL is successfully sent to you on LINE, the system waits for approximately 10 seconds (buffer time) before calling the deletion command to remove the image from Cloudinary.
+3.  **Reason for Deletion**:
+    -   **LINE Forwarding Mechanism**: After the image is sent via LINE, it is temporarily cached on LINE's servers. You can directly forward or share it without relying on the Cloudinary link.
+    -   **Cost and Privacy Considerations**: This significantly reduces Cloudinary storage costs and ensures that your personalized images are not permanently retained on third-party servers.
+
+
 ## 🚀 Quick Start
 
 Please follow these steps to set up and run this project in your local environment.
