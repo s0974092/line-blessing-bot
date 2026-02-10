@@ -26,19 +26,19 @@ describe('ai service', () => {
   describe('composePrompt', () => {
     it('should compose a prompt from theme and style', () => {
       const prompt = composePrompt(theme, style, 'Hello');
-      expect(prompt).toBe('ThemePrompt StylePrompt');
+      expect(prompt).toBe('ThemePrompt StylePrompt, high resolution, 8k, highly detailed, masterpiece, sharp focus');
     });
 
     it('should prepend blessing text for festival theme', () => {
       const festivalTheme: Theme = { ...theme, id: 'festival' };
       const prompt = composePrompt(festivalTheme, style, 'Custom Blessing');
-      expect(prompt).toBe('Custom Blessing, ThemePrompt StylePrompt');
+      expect(prompt).toBe('Custom Blessing, ThemePrompt StylePrompt, high resolution, 8k, highly detailed, masterpiece, sharp focus');
     });
 
     it('should not prepend blessing text for festival theme if text is default', () => {
       const festivalTheme: Theme = { ...theme, id: 'festival' };
       const prompt = composePrompt(festivalTheme, style, '用主題預設文字');
-      expect(prompt).toBe('ThemePrompt StylePrompt');
+      expect(prompt).toBe('ThemePrompt StylePrompt, high resolution, 8k, highly detailed, masterpiece, sharp focus');
     });
 
     it('should throw an error if theme or style is missing', () => {
