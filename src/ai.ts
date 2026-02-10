@@ -1,6 +1,7 @@
 import { Theme, Style } from './types';
 import { overlayTextOnImage } from './image';
 import { generateBlessingText } from './gemini';
+import { config } from './config';
 
 /**
  * Composes a prompt for image generation based on a theme and a style.
@@ -18,6 +19,9 @@ export function composePrompt(theme: Theme, style: Style, blessingText: string):
   if (theme.id === 'festival' && blessingText && blessingText !== '用主題預設文字') {
     basePrompt = `${blessingText}, ${basePrompt}`;
   }
+
+  // Append quality boosters
+  basePrompt += ', high resolution, 8k, highly detailed, masterpiece, sharp focus';
 
   return basePrompt;
 }
@@ -55,11 +59,22 @@ export async function generateImage(theme: Theme, style: Style, text: string): P
     for (let i = 0; i < maxRetries; i++) {
       try {
         // Use the correct image generation endpoint
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}`;
+        const negativePrompt = encodeURIComponent('worst quality, blurry');
+        let imageUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?width=${width}&height=${height}&seed=${seed}&model=${model}&nologo=${nologo}&negative_prompt=${negativePrompt}`;
+
+        const headers: Record<string, string> = {
+          'User-Agent': 'LineBlessingBot/1.0',
+        };
+
+        // Add API Key and enhance parameter if key is present
+        if (config.pollinations.apiKey) {
+          imageUrl += `&enhance=true`;
+          headers['Authorization'] = `Bearer ${config.pollinations.apiKey}`;
+        }
 
         console.log(`Attempt ${i + 1}: Fetching image from Pollinations.ai:`, imageUrl);
 
-        const response = await fetch(imageUrl);
+        const response = await fetch(imageUrl, { headers });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch image from Pollinations.ai: ${response.statusText}`);

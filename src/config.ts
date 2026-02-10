@@ -38,6 +38,13 @@ export const config = {
   },
 
   /**
+   * Pollinations API 相關設定
+   */
+  pollinations: {
+    apiKey: process.env.POLLINATIONS_API_KEY || '',
+  },
+
+  /**
    * Cloudinary 相關設定
    */
   cloudinary: {
@@ -61,7 +68,7 @@ export const config = {
     triggerKeywords: (process.env.BOT_TRIGGER_KEYWORDS || '開始,生成圖片,長輩圖')
       .split(',')
       .map((k) => k.trim()),
-    
+
     maxTextLength: parseInt(process.env.BOT_MAX_TEXT_LENGTH || '20', 10),
 
     welcomeMessage: process.env.WELCOME_MESSAGE?.replace(/\\n/g, '\n') || '哈囉！我是您的專屬祝福圖片生成器！🌸\n您可以透過我輕鬆生成帶有祝福語的圖片，並分享給親朋好友。\n請輸入 {keywords} 來製作您的第一張長輩圖吧！',
